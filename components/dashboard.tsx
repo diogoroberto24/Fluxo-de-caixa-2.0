@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, TrendingDown, Users, AlertTriangle, RefreshCw, Play, Eye } from "lucide-react"
+import { TrendingUp, TrendingDown, Users, AlertTriangle, RefreshCw, Play, Eye, UserCheck } from "lucide-react"
 import { RevenueChart } from "@/components/revenue-chart"
 import { RecentPayments } from "@/components/recent-payments"
 import { LiquidGlassEffect } from "@/components/liquid-glass-effect"
@@ -28,7 +28,7 @@ const kpiData = [
     clickable: false,
   },
   {
-    title: "Clientes em Dia", // alterado de "Clientes Ativos" para "Clientes em Dia"
+    title: "Clientes em Dia",
     value: "47",
     change: "+3",
     trend: "up" as const,
@@ -45,11 +45,20 @@ const kpiData = [
     clickable: true,
     clientType: "overdue" as const,
   },
+  {
+    title: "Total de Clientes",
+    value: "52",
+    change: "+1",
+    trend: "up" as const,
+    icon: UserCheck,
+    clickable: true,
+    clientType: "all" as const,
+  },
 ]
 
 export function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedClientType, setSelectedClientType] = useState<"active" | "overdue">("active")
+  const [selectedClientType, setSelectedClientType] = useState<"active" | "overdue" | "all">("active")
 
   const handleKpiClick = (kpi: (typeof kpiData)[0]) => {
     if (kpi.clickable && kpi.clientType) {
@@ -83,7 +92,7 @@ export function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {kpiData.map((kpi, index) => {
           const Icon = kpi.icon
           return (

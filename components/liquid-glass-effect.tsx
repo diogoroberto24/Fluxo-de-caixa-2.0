@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useRef, useState } from "react"
+import type React from "react"
+import { useRef, useState } from "react"
 
 interface LiquidGlassEffectProps {
   children: React.ReactNode
@@ -9,12 +10,7 @@ interface LiquidGlassEffectProps {
   isButton?: boolean
 }
 
-export function LiquidGlassEffect({
-  children,
-  className = "",
-  style,
-  isButton = false,
-}: LiquidGlassEffectProps) {
+export function LiquidGlassEffect({ children, className = "", style, isButton = false }: LiquidGlassEffectProps) {
   const elementRef = useRef<HTMLDivElement>(null)
   const [isHovering, setIsHovering] = useState(false)
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
@@ -92,7 +88,7 @@ export function LiquidGlassEffect({
       ))}
 
       {/* Conteúdo real */}
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10 h-full p-1">{children}</div>
 
       {/* Overlay de brilho */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none z-5" />

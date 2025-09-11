@@ -49,16 +49,16 @@ const recentPayments = [
 
 export function RecentPayments() {
   return (
-    <Card className="bg-card border-border">
-      <CardHeader>
+    <Card className="bg-card border-border h-full">
+      <CardHeader className="pb-4">
         <CardTitle className="text-card-foreground">Pagamentos Recentes</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="h-full overflow-y-auto">
+        <div className="space-y-3">
           {recentPayments.map((payment) => (
-            <div key={payment.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
+            <div key={payment.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <Avatar className="h-7 w-7 flex-shrink-0">
                   <AvatarFallback className="text-xs">
                     {payment.client
                       .split(" ")
@@ -67,20 +67,20 @@ export function RecentPayments() {
                       .slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">{payment.client}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-card-foreground truncate">{payment.client}</p>
                   <p className="text-xs text-muted-foreground">
                     {payment.date} • {payment.method}
                   </p>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right flex-shrink-0 ml-2">
                 <p className="text-sm font-medium text-card-foreground">{payment.value}</p>
                 <Badge
                   variant={
                     payment.status === "Pago" ? "default" : payment.status === "Pendente" ? "secondary" : "destructive"
                   }
-                  className="text-xs"
+                  className="text-xs mt-1"
                 >
                   {payment.status}
                 </Badge>

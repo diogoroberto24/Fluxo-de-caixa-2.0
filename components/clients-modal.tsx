@@ -149,28 +149,58 @@ const mockClients: Client[] = [
 interface ClientsModalProps {
   isOpen: boolean
   onClose: () => void
-  clientType: "active" | "overdue"
+  clientType: "active" | "overdue" | "all"
 }
 
 export function ClientsModal({ isOpen, onClose, clientType }: ClientsModalProps) {
   const [searchTerm, setSearchTerm] = useState("")
 
   const filteredClients = mockClients
-    .filter((client) => client.status === clientType)
+    .filter((client) => {
+      if (clientType === "all") {
+        return client.status === "active" || client.status === "overdue"
+      }
+      if (clientType === "overdue") {
+        return client.status === "overdue"
+      }
+      return client.status === clientType
+    })
     .filter(
       (client) => client.name.toLowerCase().includes(searchTerm.toLowerCase()) || client.cnpj.includes(searchTerm),
     )
 
-  const title = clientType === "active" ? "Clientes em Dia" : "Clientes Inadimplentes"
-  const description =
-    clientType === "active" ? "Clientes em dia com os honorários" : "Clientes com pagamentos em atraso"
+  const getTitle = () => {
+    switch (clientType) {
+      case "active":
+        return "Clientes em Dia"
+      case "overdue":
+        return "Clientes Inadimplentes"
+      case "all":
+        return "Total de Clientes"
+      default:
+        return "Clientes"
+    }
+  }
+
+  const getDescription = () => {
+    switch (clientType) {
+      case "active":
+        return "Clientes em dia com os honorários"
+      case "overdue":
+        return "Clientes com pagamentos em atraso"
+      case "all":
+        return "Todos os clientes cadastrados no sistema"
+      default:
+        return "Lista de clientes"
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-w-5xl h-[85vh] flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <DialogTitle className="text-xl font-semibold">{getTitle()}</DialogTitle>
+          <p className="text-sm text-muted-foreground">{getDescription()}</p>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden px-6 py-4">
