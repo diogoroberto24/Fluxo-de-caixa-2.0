@@ -20,6 +20,7 @@ interface Client {
 }
 
 const mockClients: Client[] = [
+  // Clientes em dia (47 total)
   {
     id: "001",
     name: "Empresa ABC Ltda",
@@ -43,26 +44,61 @@ const mockClients: Client[] = [
     email: "financeiro@comercioxyz.com",
   },
   {
-    id: "003",
-    name: "Indústria DEF S/A",
-    cnpj: "11.222.333/0001-44",
-    modules: ["Contábil", "Fiscal", "Trabalhista"],
-    fees: 4500,
-    status: "overdue",
-    lastPayment: "2023-11-20",
-    phone: "(11) 77777-7777",
-    email: "admin@industriadef.com",
-  },
-  {
     id: "004",
     name: "Serviços GHI Ltda",
     cnpj: "55.666.777/0001-88",
-    modules: ["Contábil", "Trabalhista"],
+    modules: ["Contábil", "Folha de Pagamento"],
     fees: 1800,
     status: "active",
     lastPayment: "2024-01-12",
     phone: "(11) 66666-6666",
     email: "rh@servicosghi.com",
+  },
+  {
+    id: "006",
+    name: "Tecnologia MNO S/A",
+    cnpj: "22.333.444/0001-55",
+    modules: ["Contábil", "Fiscal"],
+    fees: 3200,
+    status: "active",
+    lastPayment: "2024-01-14",
+    phone: "(11) 44444-4444",
+    email: "ti@tecnologiamno.com",
+  },
+  {
+    id: "007",
+    name: "Alimentação PQR Ltda",
+    cnpj: "33.444.555/0001-66",
+    modules: ["Contábil"],
+    fees: 1500,
+    status: "active",
+    lastPayment: "2024-01-13",
+    phone: "(11) 33333-3333",
+    email: "admin@alimentacaopqr.com",
+  },
+  // Gerando mais 42 clientes em dia para totalizar 47
+  ...Array.from({ length: 42 }, (_, i) => ({
+    id: `00${i + 8}`,
+    name: `Cliente ${String.fromCharCode(65 + (i % 26))}${String.fromCharCode(65 + ((i + 1) % 26))}${String.fromCharCode(65 + ((i + 2) % 26))} ${i % 2 === 0 ? "Ltda" : "ME"}`,
+    cnpj: `${String(10 + i).padStart(2, "0")}.${String(100 + i).padStart(3, "0")}.${String(200 + i).padStart(3, "0")}/0001-${String(10 + i).padStart(2, "0")}`,
+    modules: i % 3 === 0 ? ["Contábil", "Fiscal"] : i % 3 === 1 ? ["Contábil"] : ["Contábil", "Folha de Pagamento"],
+    fees: 800 + i * 100,
+    status: "active" as const,
+    lastPayment: `2024-01-${String(10 + (i % 20)).padStart(2, "0")}`,
+    phone: `(11) ${String(90000 + i).padStart(5, "0")}-${String(1000 + i).padStart(4, "0")}`,
+    email: `contato${i}@cliente${i}.com`,
+  })),
+  // Clientes inadimplentes (5 total)
+  {
+    id: "003",
+    name: "Indústria DEF S/A",
+    cnpj: "11.222.333/0001-44",
+    modules: ["Contábil", "Fiscal", "Folha de Pagamento"],
+    fees: 4500,
+    status: "overdue",
+    lastPayment: "2023-11-20",
+    phone: "(11) 77777-7777",
+    email: "admin@industriadef.com",
   },
   {
     id: "005",
@@ -74,6 +110,39 @@ const mockClients: Client[] = [
     lastPayment: "2023-12-05",
     phone: "(11) 55555-5555",
     email: "contato@consultoriajkl.com",
+  },
+  {
+    id: "050",
+    name: "Transportes STU Ltda",
+    cnpj: "44.555.666/0001-77",
+    modules: ["Contábil", "Fiscal"],
+    fees: 2200,
+    status: "overdue",
+    lastPayment: "2023-10-15",
+    phone: "(11) 22222-2222",
+    email: "financeiro@transportesstu.com",
+  },
+  {
+    id: "051",
+    name: "Construção VWX S/A",
+    cnpj: "66.777.888/0001-99",
+    modules: ["Contábil", "Folha de Pagamento"],
+    fees: 3800,
+    status: "overdue",
+    lastPayment: "2023-09-30",
+    phone: "(11) 11111-1111",
+    email: "obras@construcaovwx.com",
+  },
+  {
+    id: "052",
+    name: "Varejo YZA ME",
+    cnpj: "77.888.999/0001-00",
+    modules: ["Contábil"],
+    fees: 1100,
+    status: "overdue",
+    lastPayment: "2023-11-10",
+    phone: "(11) 00000-0000",
+    email: "vendas@varejoyza.com",
   },
 ]
 
@@ -92,7 +161,7 @@ export function ClientsModal({ isOpen, onClose, clientType }: ClientsModalProps)
       (client) => client.name.toLowerCase().includes(searchTerm.toLowerCase()) || client.cnpj.includes(searchTerm),
     )
 
-  const title = clientType === "active" ? "Clientes Ativos" : "Clientes Inadimplentes"
+  const title = clientType === "active" ? "Clientes em Dia" : "Clientes Inadimplentes"
   const description =
     clientType === "active" ? "Clientes em dia com os honorários" : "Clientes com pagamentos em atraso"
 

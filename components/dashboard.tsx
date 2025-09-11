@@ -28,7 +28,7 @@ const kpiData = [
     clickable: false,
   },
   {
-    title: "Clientes Ativos",
+    title: "Clientes em Dia", // alterado de "Clientes Ativos" para "Clientes em Dia"
     value: "47",
     change: "+3",
     trend: "up" as const,

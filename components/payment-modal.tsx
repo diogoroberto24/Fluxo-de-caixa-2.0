@@ -20,8 +20,6 @@ interface PaymentModalProps {
 export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
-    client: client?.name || "",
-    value: "",
     date: "",
     method: "",
     observations: "",
@@ -35,8 +33,6 @@ export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
     })
     onClose()
     setFormData({
-      client: "",
-      value: "",
       date: "",
       method: "",
       observations: "",
@@ -50,27 +46,6 @@ export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
           <DialogTitle>Registrar Pagamento</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="client">Cliente</Label>
-            <Input
-              id="client"
-              value={formData.client}
-              onChange={(e) => setFormData((prev) => ({ ...prev, client: e.target.value }))}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="value">Valor</Label>
-            <Input
-              id="value"
-              value={formData.value}
-              onChange={(e) => setFormData((prev) => ({ ...prev, value: e.target.value }))}
-              placeholder="R$ 0,00"
-              required
-            />
-          </div>
-
           <div>
             <Label htmlFor="date">Data do Pagamento</Label>
             <Input
