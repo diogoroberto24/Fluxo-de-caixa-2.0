@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ClientAutocomplete } from "@/components/ui/client-autocomplete"
 import { useToast } from "@/hooks/use-toast"
 
 interface PaymentModalProps {
@@ -20,6 +21,8 @@ interface PaymentModalProps {
 export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
+    clientName: "",
+    value: "",
     date: "",
     method: "",
     observations: "",
@@ -33,6 +36,8 @@ export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
     })
     onClose()
     setFormData({
+      clientName: "",
+      value: "",
       date: "",
       method: "",
       observations: "",
@@ -46,6 +51,27 @@ export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
           <DialogTitle>Registrar Pagamento</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="clientName">Nome do Cliente</Label>
+            <ClientAutocomplete
+              value={formData.clientName}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, clientName: value }))}
+              placeholder="Busque e selecione um cliente..."
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="value">Valor Pago</Label>
+            <Input
+              id="value"
+              type="text"
+              placeholder="R$ 0,00"
+              value={formData.value}
+              onChange={(e) => setFormData((prev) => ({ ...prev, value: e.target.value }))}
+              required
+            />
+          </div>
+
           <div>
             <Label htmlFor="date">Data do Pagamento</Label>
             <Input
