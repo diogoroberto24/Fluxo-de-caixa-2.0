@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Plus, Search, Edit, Trash2 } from "lucide-react"
 import { PaymentModal } from "@/components/payment-modal"
 
@@ -51,8 +59,35 @@ const mockReceivables = [
 export function ReceivablesManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [receivables, setReceivables] = useState(mockReceivables)
+  const [editingReceivable, setEditingReceivable] = useState<(typeof mockReceivables)[0] | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [receivableToDelete, setReceivableToDelete] = useState<number | null>(null)
 
-  const filteredReceivables = mockReceivables.filter((receivable) =>
+  const handleEditReceivable = (receivable: (typeof mockReceivables)[0]) => {
+    setEditingReceivable(receivable)
+    setIsPaymentModalOpen(true)
+  }
+
+  const handleDeleteReceivable = (id: number) => {
+    setReceivableToDelete(id)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (receivableToDelete) {
+      setReceivables(receivables.filter((r) => r.id !== receivableToDelete))
+      setReceivableToDelete(null)
+      setIsDeleteDialogOpen(false)
+    }
+  }
+
+  const handleModalClose = () => {
+    setIsPaymentModalOpen(false)
+    setEditingReceivable(null)
+  }
+
+  const filteredReceivables = receivables.filter((receivable) =>
     receivable.client.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
@@ -130,10 +165,10 @@ export function ReceivablesManagement() {
                   <TableCell className="max-w-xs truncate">{receivable.observations}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => handleEditReceivable(receivable)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteReceivable(receivable.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -145,7 +180,31 @@ export function ReceivablesManagement() {
         </CardContent>
       </Card>
 
-      <PaymentModal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} />
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={handleModalClose}
+        isEditMode={!!editingReceivable}
+        receivableData={editingReceivable}
+      />
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este recebimento? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

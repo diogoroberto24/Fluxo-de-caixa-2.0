@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,9 +16,19 @@ interface PaymentModalProps {
   isOpen: boolean
   onClose: () => void
   client?: any
+  isEditMode?: boolean
+  receivableData?: {
+    id: number
+    client: string
+    value: string
+    date: string
+    method: string
+    status: string
+    observations: string
+  } | null
 }
 
-export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
+export function PaymentModal({ isOpen, onClose, client, isEditMode = false, receivableData }: PaymentModalProps) {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     clientName: "",
@@ -28,27 +38,54 @@ export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
     observations: "",
   })
 
+  useEffect(() => {
+    if (isEditMode && receivableData) {
+      // Convert date from DD/MM/YYYY to YYYY-MM-DD for input
+      const dateParts = receivableData.date.split("/")
+      const formattedDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : ""
+
+      setFormData({
+        clientName: receivableData.client,
+        value: receivableData.value,
+        date: formattedDate,
+        method: receivableData.method.toLowerCase(),
+        observations: receivableData.observations,
+      })
+    } else if (!isEditMode) {
+      // Reset form when not editing
+      setFormData({
+        clientName: "",
+        value: "",
+        date: "",
+        method: "",
+        observations: "",
+      })
+    }
+  }, [isEditMode, receivableData, isOpen])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     toast({
-      title: "Pagamento registrado com sucesso!",
-      description: "O pagamento foi adicionado ao sistema.",
+      title: isEditMode ? "Pagamento atualizado com sucesso!" : "Pagamento registrado com sucesso!",
+      description: isEditMode ? "As alterações foram salvas no sistema." : "O pagamento foi adicionado ao sistema.",
     })
     onClose()
-    setFormData({
-      clientName: "",
-      value: "",
-      date: "",
-      method: "",
-      observations: "",
-    })
+    if (!isEditMode) {
+      setFormData({
+        clientName: "",
+        value: "",
+        date: "",
+        method: "",
+        observations: "",
+      })
+    }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Registrar Pagamento</DialogTitle>
+          <DialogTitle>{isEditMode ? "Editar Pagamento" : "Registrar Pagamento"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -94,9 +131,9 @@ export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="pix">PIX</SelectItem>
-                <SelectItem value="transferencia">Transferência</SelectItem>
+                <SelectItem value="transferência">Transferência</SelectItem>
                 <SelectItem value="boleto">Boleto</SelectItem>
-                <SelectItem value="cartao">Cartão</SelectItem>
+                <SelectItem value="cartão">Cartão</SelectItem>
                 <SelectItem value="dinheiro">Dinheiro</SelectItem>
               </SelectContent>
             </Select>
@@ -116,7 +153,7 @@ export function PaymentModal({ isOpen, onClose, client }: PaymentModalProps) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit">Registrar Pagamento</Button>
+            <Button type="submit">{isEditMode ? "Salvar Alterações" : "Registrar Pagamento"}</Button>
           </div>
         </form>
       </DialogContent>
