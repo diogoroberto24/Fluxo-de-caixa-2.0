@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Plus, Search, Eye, Edit, DollarSign, UserX, Users } from "lucide-react"
+import { Plus, Search, Eye, Edit, DollarSign, UserX, Users, Calendar, Phone, Building, CreditCard } from "lucide-react"
 import { ClientModal } from "@/components/client-modal"
 import { PaymentModal } from "@/components/payment-modal"
 
@@ -24,6 +24,79 @@ interface Client {
   phone: string
   email: string
   inactivationReason?: string
+}
+
+interface FeeHistory {
+  date: string
+  previousFee: number
+  newFee: number
+  reason: string
+  changedBy: string
+}
+
+const mockFeeHistory: Record<string, FeeHistory[]> = {
+  "001": [
+    {
+      date: "2024-01-01",
+      previousFee: 0,
+      newFee: 2000,
+      reason: "Cadastro inicial do cliente",
+      changedBy: "Sistema",
+    },
+    {
+      date: "2024-06-15",
+      previousFee: 2000,
+      newFee: 2300,
+      reason: "Reajuste anual - inflação",
+      changedBy: "João Silva",
+    },
+    {
+      date: "2024-11-01",
+      previousFee: 2300,
+      newFee: 2500,
+      reason: "Adição de módulo fiscal",
+      changedBy: "Maria Santos",
+    },
+  ],
+  "002": [
+    {
+      date: "2023-08-10",
+      previousFee: 0,
+      newFee: 1000,
+      reason: "Cadastro inicial do cliente",
+      changedBy: "Sistema",
+    },
+    {
+      date: "2024-08-10",
+      previousFee: 1000,
+      newFee: 1200,
+      reason: "Reajuste anual contratual",
+      changedBy: "Carlos Oliveira",
+    },
+  ],
+  "003": [
+    {
+      date: "2023-03-20",
+      previousFee: 0,
+      newFee: 3500,
+      reason: "Cadastro inicial do cliente",
+      changedBy: "Sistema",
+    },
+    {
+      date: "2023-09-15",
+      previousFee: 3500,
+      newFee: 4200,
+      reason: "Expansão dos serviços - folha de pagamento",
+      changedBy: "Ana Costa",
+    },
+    {
+      date: "2024-03-20",
+      previousFee: 4200,
+      newFee: 4500,
+      reason: "Reajuste anual",
+      changedBy: "João Silva",
+    },
+  ],
 }
 
 const mockClients: Client[] = [
@@ -163,6 +236,9 @@ export function ClientsManagement() {
   const [clientToInactivate, setClientToInactivate] = useState<string | null>(null)
   const [inactivationReason, setInactivationReason] = useState("")
   const [showInactiveClients, setShowInactiveClients] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [clientToView, setClientToView] = useState<Client | null>(null)
 
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
@@ -202,6 +278,42 @@ export function ClientsManagement() {
     setIsInactivateModalOpen(false)
     setClientToInactivate(null)
     setInactivationReason("")
+  }
+
+  const handleEditClient = (client: Client) => {
+    setSelectedClient(client)
+    setIsEditMode(true)
+    setIsClientModalOpen(true)
+  }
+
+  const handleClientModalClose = () => {
+    setIsClientModalOpen(false)
+    setIsEditMode(false)
+    setSelectedClient(null)
+  }
+
+  const handleViewClient = (client: Client) => {
+    setClientToView(client)
+    setIsViewModalOpen(true)
+  }
+
+  const handleViewModalClose = () => {
+    setIsViewModalOpen(false)
+    setClientToView(null)
+  }
+
+  const getClientFeeHistory = (clientId: string): FeeHistory[] => {
+    return (
+      mockFeeHistory[clientId] || [
+        {
+          date: "2024-01-01",
+          previousFee: 0,
+          newFee: clients.find((c) => c.id === clientId)?.fees || 0,
+          reason: "Cadastro inicial do cliente",
+          changedBy: "Sistema",
+        },
+      ]
+    )
   }
 
   return (
@@ -306,12 +418,12 @@ export function ClientsManagement() {
                   )}
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => handleViewClient(client)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       {!showInactiveClients && (
                         <>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditClient(client)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleRegisterPayment(client)}>
@@ -336,7 +448,12 @@ export function ClientsManagement() {
         </CardContent>
       </Card>
 
-      <ClientModal isOpen={isClientModalOpen} onClose={() => setIsClientModalOpen(false)} />
+      <ClientModal
+        isOpen={isClientModalOpen}
+        onClose={handleClientModalClose}
+        isEditMode={isEditMode}
+        clientData={selectedClient}
+      />
       <PaymentModal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} client={selectedClient} />
 
       {/* Modal de confirmação de inativação */}
@@ -363,6 +480,164 @@ export function ClientsManagement() {
             </Button>
             <Button variant="destructive" onClick={confirmInactivation} disabled={!inactivationReason.trim()}>
               Inativar Cliente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Visualização Completa do Cliente
+            </DialogTitle>
+          </DialogHeader>
+
+          {clientToView && (
+            <div className="space-y-6 py-4">
+              {/* Informações Básicas */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      Dados da Empresa
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Nome/Razão Social</Label>
+                      <p className="text-sm font-medium">{clientToView.name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">CNPJ/CPF</Label>
+                      <p className="text-sm">{clientToView.cnpj}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                      <div className="mt-1">
+                        <Badge
+                          variant={
+                            clientToView.status === "active"
+                              ? "default"
+                              : clientToView.status === "inactive"
+                                ? "secondary"
+                                : "destructive"
+                          }
+                        >
+                          {clientToView.status === "active"
+                            ? "Em dia"
+                            : clientToView.status === "inactive"
+                              ? "Inativo"
+                              : "Inadimplente"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      Contato
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Telefone</Label>
+                      <p className="text-sm">{clientToView.phone}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">E-mail</Label>
+                      <p className="text-sm">{clientToView.email}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Último Pagamento</Label>
+                      <p className="text-sm flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(clientToView.lastPayment).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Módulos e Honorários */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Módulos Contratados</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {clientToView.modules.map((module, index) => (
+                        <Badge key={index} variant="outline" className="text-sm">
+                          {module}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      Honorários Atuais
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold text-green-600">R$ {clientToView.fees.toLocaleString("pt-BR")}</p>
+                    <p className="text-sm text-muted-foreground">Valor mensal</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Histórico de Alterações de Honorários */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Histórico de Alterações de Honorários</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {getClientFeeHistory(clientToView.id).map((history, index) => (
+                      <div key={index} className="border-l-2 border-blue-200 pl-4 pb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-blue-500" />
+                            <span className="font-medium text-sm">
+                              {new Date(history.date).toLocaleDateString("pt-BR")}
+                            </span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {history.changedBy}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-4 text-sm">
+                            <span className="text-muted-foreground">
+                              De: <span className="font-medium">R$ {history.previousFee.toLocaleString("pt-BR")}</span>
+                            </span>
+                            <span className="text-muted-foreground">→</span>
+                            <span className="text-green-600">
+                              Para: <span className="font-medium">R$ {history.newFee.toLocaleString("pt-BR")}</span>
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{history.reason}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleViewModalClose}>
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,9 +15,11 @@ import { useToast } from "@/hooks/use-toast"
 interface ClientModalProps {
   isOpen: boolean
   onClose: () => void
+  isEditMode?: boolean
+  clientData?: any
 }
 
-export function ClientModal({ isOpen, onClose }: ClientModalProps) {
+export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }: ClientModalProps) {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     name: "",
@@ -32,6 +34,48 @@ export function ClientModal({ isOpen, onClose }: ClientModalProps) {
     fees: "",
     observations: "",
   })
+
+  useEffect(() => {
+    if (isEditMode && clientData) {
+      const moduleMapping: Record<string, string> = {
+        Contábil: "contabil",
+        Fiscal: "fiscal",
+        "Folha de Pagamento": "trabalhista",
+        Societário: "societario",
+      }
+
+      const mappedModules =
+        clientData.modules?.map((module: string) => moduleMapping[module] || module.toLowerCase()) || []
+
+      setFormData({
+        name: clientData.name || "",
+        document: clientData.cnpj || "",
+        email: clientData.email || "",
+        phone: clientData.phone || "",
+        address: clientData.address || "",
+        partnerCpf: clientData.partnerCpf || "",
+        partnerAddress: clientData.partnerAddress || "",
+        taxationType: clientData.taxationType || "",
+        modules: mappedModules,
+        fees: clientData.fees?.toString() || "",
+        observations: clientData.observations || "",
+      })
+    } else if (!isEditMode) {
+      setFormData({
+        name: "",
+        document: "",
+        email: "",
+        phone: "",
+        address: "",
+        partnerCpf: "",
+        partnerAddress: "",
+        taxationType: "",
+        modules: [],
+        fees: "",
+        observations: "",
+      })
+    }
+  }, [isEditMode, clientData, isOpen])
 
   const modules = [
     { id: "contabil", label: "Contábil" },
@@ -50,23 +94,25 @@ export function ClientModal({ isOpen, onClose }: ClientModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     toast({
-      title: "Cliente cadastrado com sucesso!",
-      description: "O novo cliente foi adicionado ao sistema.",
+      title: isEditMode ? "Cliente atualizado com sucesso!" : "Cliente cadastrado com sucesso!",
+      description: isEditMode ? "Os dados do cliente foram atualizados." : "O novo cliente foi adicionado ao sistema.",
     })
     onClose()
-    setFormData({
-      name: "",
-      document: "",
-      email: "",
-      phone: "",
-      address: "",
-      partnerCpf: "",
-      partnerAddress: "",
-      taxationType: "",
-      modules: [],
-      fees: "",
-      observations: "",
-    })
+    if (!isEditMode) {
+      setFormData({
+        name: "",
+        document: "",
+        email: "",
+        phone: "",
+        address: "",
+        partnerCpf: "",
+        partnerAddress: "",
+        taxationType: "",
+        modules: [],
+        fees: "",
+        observations: "",
+      })
+    }
   }
 
   const handleModuleChange = (moduleId: string, checked: boolean) => {
@@ -80,7 +126,7 @@ export function ClientModal({ isOpen, onClose }: ClientModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Cliente</DialogTitle>
+          <DialogTitle>{isEditMode ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -219,7 +265,7 @@ export function ClientModal({ isOpen, onClose }: ClientModalProps) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit">Cadastrar Cliente</Button>
+            <Button type="submit">{isEditMode ? "Atualizar Cliente" : "Cadastrar Cliente"}</Button>
           </div>
         </form>
       </DialogContent>
