@@ -22,17 +22,17 @@ interface ClientModalProps {
 export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }: ClientModalProps) {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
-    name: "",
-    document: "",
+    nome: "",
+    documento: "",
     email: "",
-    phone: "",
-    address: "",
-    partnerCpf: "",
-    partnerAddress: "",
-    taxationType: "",
-    modules: [] as string[],
-    fees: "",
-    observations: "",
+    telefone: "",
+    endereco: "",
+    cpf_socio: "",
+    endereco_socio: "",
+    tributacao: "",
+    modulos: [] as string[],
+    honorarios: "",
+    observacao: "",
   })
 
   useEffect(() => {
@@ -48,31 +48,31 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
         clientData.modules?.map((module: string) => moduleMapping[module] || module.toLowerCase()) || []
 
       setFormData({
-        name: clientData.name || "",
-        document: clientData.cnpj || "",
+        nome: clientData.nome || "",
+        documento: clientData.documento || "",
         email: clientData.email || "",
-        phone: clientData.phone || "",
-        address: clientData.address || "",
-        partnerCpf: clientData.partnerCpf || "",
-        partnerAddress: clientData.partnerAddress || "",
-        taxationType: clientData.taxationType || "",
-        modules: mappedModules,
-        fees: clientData.fees?.toString() || "",
-        observations: clientData.observations || "",
+        telefone: clientData.telefone || "",
+        endereco: clientData.endereco || "",
+        cpf_socio: clientData.cpf_socio || "",
+        endereco_socio: clientData.endereco_socio || "",
+        tributacao: clientData.tributacao || "",
+        modulos: mappedModules,
+        honorarios: clientData.honorarios?.toString() || "",
+        observacao: clientData.observacao || "",
       })
     } else if (!isEditMode) {
       setFormData({
-        name: "",
-        document: "",
+        nome: "",
+        documento: "",
         email: "",
-        phone: "",
-        address: "",
-        partnerCpf: "",
-        partnerAddress: "",
-        taxationType: "",
-        modules: [],
-        fees: "",
-        observations: "",
+        telefone: "",
+        endereco: "",
+        cpf_socio: "",
+        endereco_socio: "",
+        tributacao: "",
+        modulos: [],
+        honorarios: "",
+        observacao: "",
       })
     }
   }, [isEditMode, clientData, isOpen])
@@ -100,17 +100,17 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
     onClose()
     if (!isEditMode) {
       setFormData({
-        name: "",
-        document: "",
+        nome: "",
+        documento: "",
         email: "",
-        phone: "",
-        address: "",
-        partnerCpf: "",
-        partnerAddress: "",
-        taxationType: "",
-        modules: [],
-        fees: "",
-        observations: "",
+        telefone: "",
+        endereco: "",
+        cpf_socio: "",
+        endereco_socio: "",
+        tributacao: "",
+        modulos: [],
+        honorarios: "",
+        observacao: "",
       })
     }
   }
@@ -118,7 +118,7 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
   const handleModuleChange = (moduleId: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      modules: checked ? [...prev.modules, moduleId] : prev.modules.filter((m) => m !== moduleId),
+      modulos: checked ? [...prev.modulos, moduleId] : prev.modulos.filter((m) => m !== moduleId),
     }))
   }
 
@@ -131,20 +131,20 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="name">Nome/Razão Social</Label>
+              <Label htmlFor="nome">Nome/Razão Social</Label>
               <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => setFormData((prev) => ({ ...prev, nome: e.target.value }))}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="document">CNPJ/CPF</Label>
+              <Label htmlFor="documento">CNPJ/CPF</Label>
               <Input
-                id="document"
-                value={formData.document}
-                onChange={(e) => setFormData((prev) => ({ ...prev, document: e.target.value }))}
+                id="documento"
+                value={formData.documento}
+                onChange={(e) => setFormData((prev) => ({ ...prev, documento: e.target.value }))}
                 required
               />
             </div>
@@ -162,22 +162,22 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
               />
             </div>
             <div>
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="telefone">Telefone</Label>
               <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                id="telefone"
+                value={formData.telefone}
+                onChange={(e) => setFormData((prev) => ({ ...prev, telefone: e.target.value }))}
                 required
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="address">Endereço</Label>
+            <Label htmlFor="endereco">Endereço</Label>
             <Input
-              id="address"
-              value={formData.address}
-              onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
+              id="endereco"
+              value={formData.endereco}
+              onChange={(e) => setFormData((prev) => ({ ...prev, endereco: e.target.value }))}
             />
           </div>
 
@@ -185,20 +185,20 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
             <Label className="text-base font-medium">Sócios (Opcional)</Label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="partnerCpf">CPF do Sócio</Label>
+                <Label htmlFor="cpf_socio">CPF do Sócio</Label>
                 <Input
-                  id="partnerCpf"
-                  value={formData.partnerCpf}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, partnerCpf: e.target.value }))}
+                  id="cpf_socio"
+                  value={formData.cpf_socio}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, cpf_socio: e.target.value }))}
                   placeholder="000.000.000-00"
                 />
               </div>
               <div>
-                <Label htmlFor="partnerAddress">Endereço do Sócio</Label>
+                <Label htmlFor="endereco_socio">Endereço do Sócio</Label>
                 <Input
-                  id="partnerAddress"
-                  value={formData.partnerAddress}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, partnerAddress: e.target.value }))}
+                  id="endereco_socio"
+                  value={formData.endereco_socio}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, endereco_socio: e.target.value }))}
                   placeholder="Endereço completo"
                 />
               </div>
@@ -206,10 +206,10 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
           </div>
 
           <div>
-            <Label htmlFor="taxationType">Tipo de Tributação</Label>
+            <Label htmlFor="tributacao">Tipo de Tributação</Label>
             <Select
-              value={formData.taxationType}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, taxationType: value }))}
+              value={formData.tributacao}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, tributacao: value }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o tipo de tributação" />
@@ -225,13 +225,13 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
           </div>
 
           <div>
-            <Label>Módulos Contratados</Label>
+            <Label htmlFor="modulos">Módulos Contratados</Label>
             <div className="grid grid-cols-2 gap-2 mt-2">
               {modules.map((module) => (
                 <div key={module.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={module.id}
-                    checked={formData.modules.includes(module.id)}
+                    checked={formData.modulos.includes(module.id)}
                     onCheckedChange={(checked) => handleModuleChange(module.id, checked as boolean)}
                   />
                   <Label htmlFor={module.id}>{module.label}</Label>
@@ -241,22 +241,22 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
           </div>
 
           <div>
-            <Label htmlFor="fees">Honorários Mensais</Label>
+            <Label htmlFor="honorarios">Honorários Mensais</Label>
             <Input
-              id="fees"
-              value={formData.fees}
-              onChange={(e) => setFormData((prev) => ({ ...prev, fees: e.target.value }))}
+              id="honorarios"
+              value={formData.honorarios}
+              onChange={(e) => setFormData((prev) => ({ ...prev, honorarios: e.target.value }))}
               placeholder="R$ 0,00"
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="observations">Observações</Label>
+            <Label htmlFor="observacao">Observações</Label>
             <Textarea
-              id="observations"
-              value={formData.observations}
-              onChange={(e) => setFormData((prev) => ({ ...prev, observations: e.target.value }))}
+              id="observacao"
+              value={formData.observacao}
+              onChange={(e) => setFormData((prev) => ({ ...prev, observacao: e.target.value }))}
               rows={3}
             />
           </div>

@@ -13,3 +13,34 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum Tributacao{
+  MEI
+  SIMPES_NACIONAL
+  LUCRO_PRESUMIDO
+  LUCRO_REAL
+}
+
+enum Modulos{
+  CONTABIL
+  FISCAL
+  FOLHA_DE_PAGAMENTO
+  SOCIETARIO
+}
+
+model Client {
+  id String @id @default(uuid())
+  nome String
+  documento String @unique
+  email String @unique
+  telefone String
+  endereco String
+  cpf_socio String?
+  endereco_socio String?
+  tributacao Tributacao
+  modulos Modulos[]
+  honorarios Float
+  observacao String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
