@@ -45,7 +45,7 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
       }
 
       const mappedModules =
-        clientData.modules?.map((module: string) => moduleMapping[module] || module.toLowerCase()) || []
+        clientData.modulos?.map((module: string) => moduleMapping[module] || module.toLowerCase()) || []
 
       setFormData({
         nome: clientData.nome || "",
@@ -91,26 +91,53 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
     { value: "real", label: "Lucro Real" },
   ]
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast({
-      title: isEditMode ? "Cliente atualizado com sucesso!" : "Cliente cadastrado com sucesso!",
-      description: isEditMode ? "Os dados do cliente foram atualizados." : "O novo cliente foi adicionado ao sistema.",
-    })
-    onClose()
-    if (!isEditMode) {
-      setFormData({
-        nome: "",
-        documento: "",
-        email: "",
-        telefone: "",
-        endereco: "",
-        cpf_socio: "",
-        endereco_socio: "",
-        tributacao: "",
-        modulos: [],
-        honorarios: "",
-        observacao: "",
+
+    try {
+      const apiUrl = '/api/clients'; // Sua API Route
+      const method = isEditMode ? 'PUT' : 'POST';
+      const payload = isEditMode ? { id: clientData.id, ...formData } : formData;
+
+      const response = await fetch(apiUrl, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao salvar cliente');
+      }
+
+      toast({
+        title: isEditMode ? "Cliente atualizado com sucesso!" : "Cliente cadastrado com sucesso!",
+        description: isEditMode ? "Os dados do cliente foram atualizados." : "O novo cliente foi adicionado ao sistema.",
+      })
+      onClose()
+      if (!isEditMode) {
+        setFormData({
+          nome: "",
+          documento: "",
+          email: "",
+          telefone: "",
+          endereco: "",
+          cpf_socio: "",
+          endereco_socio: "",
+          tributacao: "",
+          modulos: [],
+          honorarios: "",
+          observacao: "",
+        })
+      }
+    } catch (error: any) {
+      console.error("Erro ao salvar cliente:", error.message)
+      toast({
+        title: "Erro ao salvar cliente",
+        description: error.message || "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
+        variant: "destructive",
       })
     }
   }
