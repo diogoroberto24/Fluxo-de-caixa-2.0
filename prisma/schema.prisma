@@ -14,33 +14,129 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Tributacao{
-  MEI
-  SIMPES_NACIONAL
-  LUCRO_PRESUMIDO
-  LUCRO_REAL
-}
-
-enum Modulos{
-  CONTABIL
-  FISCAL
-  FOLHA_DE_PAGAMENTO
-  SOCIETARIO
-}
-
 model Client {
   id String @id @default(uuid())
   nome String
   documento String @unique
-  email String @unique
+  email String
   telefone String
   endereco String
   cpf_socio String?
   endereco_socio String?
-  tributacao Tributacao
-  modulos Modulos[]
-  honorarios Float
+  tributacao String
   observacao String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  clinteServicos ClienteServico[]
+  cobrancas Cobranca[]
+  recorrencias Recorrencia[]
+}
+
+model CategoriaServico{
+  id String @id @default(uuid())
+  nome String
+  descricao String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relacionamentos
+  servicos Servico[]
+}
+
+model Servico{
+  id String @id @default(uuid())
+  nome String
+  descricao String?
+  valor Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relacionamentos
+  categoriaId String
+  categoria CategoriaServico @relation(fields: [categoriaId], references: [id])
+  clinteServicos ClienteServico[]
+  itensCobranca ItemCobranca[]
+}
+
+model ClienteServico{
+  id String @id @default(uuid())
+  ativo Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relacionamentos
+  clienteId String
+  cliente Client @relation(fields: [clienteId], references: [id])
+  servicoId String
+  servico Servico @relation(fields: [servicoId], references: [id])
+}
+
+model Balanco{
+  id String @id @default(uuid())
+  tipo String   // "entrada" ou "saída"
+  valor Float
+  descricao String?
+  data DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relacionamentos
+  cobrancaId String?
+  cobranca Cobranca? @relation(fields: [cobrancaId], references: [id])
+  recorrenciaId String?
+  recorrencia Recorrencia? @relation(fields: [recorrenciaId], references: [id])
+}
+
+model Recorrencia{
+  id String @id @default(uuid())
+  tipo String // "entrada" ou "saída"
+  valor Float
+  descricao String?
+  dataInicio DateTime
+  dataFim DateTime?
+  frequencia String  // "mensal", "semanal", etc.
+  diaVencimento Int?
+  ativo Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relacionamentos
+  clienteId String?
+  cliente Client? @relation(fields: [clienteId], references: [id])
+  balancos Balanco[]
+}
+
+model Cobranca{
+  id String @id @default(uuid())
+  valorTotal Float
+  dataRegistro DateTime @default(now())
+  dataPagamento DateTime?
+  metodoPagamento String?
+  status String  // "pendente", "pago", "cancelado"
+  observacoes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relacionamentos
+  clienteId String
+  cliente Client @relation(fields: [clienteId], references: [id])
+  itensCobranca ItemCobranca[]
+  balancos Balanco[]
+}
+
+model ItemCobranca{
+  id String @id @default(uuid())
+  quantidade Int @default(1)
+  valorUnitario Float
+  descricao String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relacionamentos
+  cobrancaId String
+  cobranca Cobranca @relation(fields: [cobrancaId], references: [id])
+  servicoId String
+  servico Servico @relation(fields: [servicoId], references: [id])
 }
