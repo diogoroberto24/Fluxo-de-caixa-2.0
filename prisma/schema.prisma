@@ -29,7 +29,7 @@ model Client {
   updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  clinteServicos ClienteServico[]
+  clienteServicos ClienteServico[]
   cobrancas Cobranca[]
   recorrencias Recorrencia[]
 }
@@ -56,7 +56,7 @@ model Servico{
   //Relacionamentos
   categoriaId String
   categoria CategoriaServico @relation(fields: [categoriaId], references: [id])
-  clinteServicos ClienteServico[]
+  clienteServicos ClienteServico[]
   itensCobranca ItemCobranca[]
 }
 

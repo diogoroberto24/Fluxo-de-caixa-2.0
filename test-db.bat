@@ -1,3 +1,2 @@
 @echo off
-npx ts-node tests/db-models.test.ts
-pause
+npx ts-node -r tsconfig-paths/register --project tsconfig.json tests/db-models.test.ts

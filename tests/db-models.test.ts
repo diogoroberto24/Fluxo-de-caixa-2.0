@@ -1,11 +1,11 @@
-import { prisma } from '../lib/db.js';
+import { prisma } from '../lib/db.ts';
 
 async function testarModelos() {
   console.log('Iniciando testes dos modelos do banco de dados...');
 
   try{
     //Descomentar para limpar os dados antes de testar
-    /*
+    
     await prisma.itemCobranca.deleteMany({});
     await prisma.balanco.deleteMany({});
     await prisma.cobranca.deleteMany({});
@@ -14,10 +14,10 @@ async function testarModelos() {
     await prisma.servico.deleteMany({});
     await prisma.categoriaServico.deleteMany({});
     await prisma.client.deleteMany({});
-    */
+    
     
     console.log('Criando categoria de serviço...');
-    const categoria = await prisma.categoraServico.create({
+    const categoria = await prisma.categoriaServico.create({
         data:{
             nome: 'Contábil',
             descricao: 'Serviços de contabilidade'
@@ -37,7 +37,7 @@ async function testarModelos() {
     console.log('Serviço criado:', servico);
 
     console.log('Criando cliente...');
-    const cliente = await prisma.cliente.create({
+    const cliente = await prisma.client.create({
         data:{
             nome: 'Empresa Teste Ltda',
             documento: '12.345.678/0001-95',
@@ -66,8 +66,8 @@ async function testarModelos() {
             clienteId: cliente.id,
             valorTotal: 500.00,
             status: 'pendente',
-            metodoPagamanto: 'PIX',
-            observacacoes: 'Cobrança de Teste',
+            metodoPagamento: 'PIX',
+            observacoes: 'Cobrança de Teste',
             itensCobranca:{
                 create:{
                     servicoId: servico.id,
@@ -87,7 +87,7 @@ async function testarModelos() {
             valor: 500.00,
             descricao: 'Pagamento de honorários',
             data: new Date(),
-            conbrancaId: cobranca.id
+            cobrancaId: cobranca.id
         }
     });
     console.log('Lançamento criado:', balanco);
@@ -99,7 +99,7 @@ async function testarModelos() {
             valor: 500.00,
             descricao: 'Mensalidade',
             dataInicio: new Date(),
-            frequancia: 'mensal',
+            frequencia: 'mensal',
             diaVencimento: 10,
             clienteId: cliente.id,
         }

@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       for (const servicoId of body.servicos){
         await prisma.clienteServico.create({
           data:{
-            clientId: newClient.id,
+            clienteId: newClient.id,
             servicoId: servicoId,
             ativo: true
           }
@@ -133,7 +133,7 @@ export async function getClientById(id: string){
         },
         cobrancas:{
           include:{
-            intensCobranca: true
+            itensCobranca: true
           }
         },
         recorrencias: true
