@@ -14,129 +14,237 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Client {
-  id String @id @default(uuid())
-  nome String
+model Usuario {
+  id        String @id @default(cuid())
+  email     String @unique
+  senha     String
+  nome      String
+  documento String
+  telefone  String
+
+  permissao String // ADMIN | SUPER | USER 
+
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?     @default("{}")
+
+  @@map("usuarios")
+}
+
+model Cliente {
+  id        String @id @default(cuid())
+  nome      String
   documento String @unique
-  email String
-  telefone String
-  endereco String
-  cpf_socio String?
-  endereco_socio String?
+  email     String
+  telefone  String
+
+  cliente_rua    String
+  cliente_numero String
+  cliente_bairro String
+  cliente_cidade String
+  cliente_estado String
+  cliente_pais   String
+
+  socio_documento String?
+  socio_rua       String?
+  socio_numero    String?
+  socio_bairro    String?
+  socio_cidade    String?
+  socio_estado    String?
+  socio_pais      String?
+
   tributacao String
   observacao String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  status              String
+  ativo               Boolean   @default(true)
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?     @default("{}")
 
   // Relacionamentos
-  clienteServicos ClienteServico[]
-  cobrancas Cobranca[]
+  produtos     ClienteProduto[]
+  cobrancas    Cobranca[]
   recorrencias Recorrencia[]
+
+  @@map("clientes")
 }
 
-model CategoriaServico{
-  id String @id @default(uuid())
-  nome String
+model Categoria {
+  id        String  @id @default(uuid())
+  nome      String
   descricao String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  ativo               Boolean   @default(true)
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?     @default("{}")
 
   //Relacionamentos
-  servicos Servico[]
+  produtos Produto[]
+
+  @@map("categorias")
 }
 
-model Servico{
-  id String @id @default(uuid())
-  nome String
+model Produto {
+  id        String  @id @default(uuid())
+  nome      String
   descricao String?
-  valor Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  valor     BigInt
+  tipo      String // servico | entrada
+  direcao   String // entrada | saida
+
+  ativo               Boolean   @default(true)
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?     @default("{}")
 
   //Relacionamentos
-  categoriaId String
-  categoria CategoriaServico @relation(fields: [categoriaId], references: [id])
-  clienteServicos ClienteServico[]
-  itensCobranca ItemCobranca[]
+  categoria_id String
+
+  categoria   Categoria        @relation(fields: [categoria_id], references: [id])
+  clientes    ClienteProduto[]
+  cobrancas   ItemCobranca[]
+  Recorrencia Recorrencia[]
+
+  @@map("produtos")
 }
 
-model ClienteServico{
-  id String @id @default(uuid())
-  ativo Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model ClienteProduto {
+  id         String  @id @default(uuid())
+  quantidade Int
+  nome       String
+  descricao  String?
+  valor      BigInt
 
-  //Relacionamentos
-  clienteId String
-  cliente Client @relation(fields: [clienteId], references: [id])
-  servicoId String
-  servico Servico @relation(fields: [servicoId], references: [id])
+  status              String
+  ativo               Boolean   @default(true)
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?     @default("{}")
+
+  cliente_id String
+  produto_id String
+
+  cliente Cliente @relation(fields: [cliente_id], references: [id])
+  produto Produto @relation(fields: [produto_id], references: [id])
+
+  @@map("cliente_produtos")
 }
 
-model Balanco{
-  id String @id @default(uuid())
-  tipo String   // "entrada" ou "saída"
-  valor Float
+enum BalancoTipo {
+  ENTRADA
+  SAIDA
+}
+
+model Balanco {
+  id        String      @id @default(uuid())
+  tipo      BalancoTipo
+  valor     BigInt
   descricao String?
-  data DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  //Relacionamentos
-  cobrancaId String?
-  cobranca Cobranca? @relation(fields: [cobrancaId], references: [id])
-  recorrenciaId String?
-  recorrencia Recorrencia? @relation(fields: [recorrenciaId], references: [id])
+  status              String
+  data_de_fato        DateTime
+  data_de_criacao     DateTime @default(now())
+  data_de_atualizacao DateTime @updatedAt
+  metadata            Json?    @default("{}")
+
+  cobranca_id    String?
+  recorrencia_id String?
+
+  cobranca    Cobranca?    @relation(fields: [cobranca_id], references: [id])
+  recorrencia Recorrencia? @relation(fields: [recorrencia_id], references: [id])
+
+  @@map("balancos")
 }
 
-model Recorrencia{
-  id String @id @default(uuid())
-  tipo String // "entrada" ou "saída"
-  valor Float
-  descricao String?
-  dataInicio DateTime
-  dataFim DateTime?
-  frequencia String  // "mensal", "semanal", etc.
-  diaVencimento Int?
-  ativo Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Recorrencia {
+  id   String @id @default(uuid())
+  tipo String // entrada | saida
+
+  descricao      String?
+  data_de_inicio DateTime
+  data_de_fim    DateTime?
+
+  frequencia        String // "mensal", "semanal", etc.
+  franquencia_valor Int // a cada X frenquencia: Ex. a cada 1 mes
+
+  ultima_execucao  DateTime?
+  proxima_execucao DateTime?
+
+  dia_de_vencimento Int?
+
+  ativo               Boolean   @default(true)
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?     @default("{}")
 
   //Relacionamentos
-  clienteId String?
-  cliente Client? @relation(fields: [clienteId], references: [id])
+  cliente_id String?
+  produto_id String?
+
   balancos Balanco[]
+  cliente  Cliente?  @relation(fields: [cliente_id], references: [id])
+  produto  Produto?  @relation(fields: [produto_id], references: [id])
+
+  @@map("recorrencias")
 }
 
-model Cobranca{
+model Cobranca {
   id String @id @default(uuid())
-  valorTotal Float
-  dataRegistro DateTime @default(now())
-  dataPagamento DateTime?
-  metodoPagamento String?
-  status String  // "pendente", "pago", "cancelado"
+
+  subtotal BigInt
+  desconto BigInt
+  total    BigInt
+  status   String // "pendente", "pago", "cancelado"
+
+  data_de_vencimento     String
+  data_de_pagamento      DateTime?
+  metodo_de_pagamento    String?
+  data_de_cancelamento   DateTime?
+  motivo_de_cancelamento String
+
   observacoes String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  data_de_criacao     DateTime @default(now())
+  data_de_atualizacao DateTime @updatedAt
+  metadata            Json?    @default("{}")
 
   //Relacionamentos
-  clienteId String
-  cliente Client @relation(fields: [clienteId], references: [id])
-  itensCobranca ItemCobranca[]
+  cliente_id String
+
+  cliente  Cliente        @relation(fields: [cliente_id], references: [id])
+  itens    ItemCobranca[]
   balancos Balanco[]
+
+  @@map("cobrancas")
 }
 
-model ItemCobranca{
-  id String @id @default(uuid())
-  quantidade Int @default(1)
-  valorUnitario Float
-  descricao String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model ItemCobranca {
+  id              String  @id @default(uuid())
+  quantidade      Int     @default(1)
+  valor_uinitario BigInt
+  subtotal        BigInt
+  desconto        BigInt
+  total           BigInt
+  descricao       String?
+
+  data_de_criacao     DateTime @default(now())
+  data_de_atualizacao DateTime @updatedAt
+  metadata            Json?    @default("{}")
 
   //Relacionamentos
-  cobrancaId String
-  cobranca Cobranca @relation(fields: [cobrancaId], references: [id])
-  servicoId String
-  servico Servico @relation(fields: [servicoId], references: [id])
+  cobranca_id String?
+  produto_id  String
+
+  cobranca Cobranca? @relation(fields: [cobranca_id], references: [id])
+  produto  Produto   @relation(fields: [produto_id], references: [id])
+
+  @@map("cobranca_itens")
 }
