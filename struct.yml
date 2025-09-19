@@ -1,0 +1,89 @@
+/src
+  /app
+    /api
+      /v1
+        /customers/route.ts
+        /invoices/route.ts
+        /services/route.ts
+        /webhooks/(gateway-x)/route.ts
+    /docs/route.ts           # Swagger UI servindo o OpenAPI gerado
+    /(site)                  # UI pública (se houver)
+  /server
+    /config
+      env.ts                 # validação de env (zod)
+      logger.ts
+    /db
+      prisma.ts              # singleton do PrismaClient
+      schema.prisma          # schema do banco
+      seeds/                 # seeds opcionais
+    /domain                  # entidades e regras puras (sem IO)
+      customer.ts
+      invoice.ts
+      service.ts
+      recurrence.ts
+      ledger.ts
+      value-objects/
+    /use-cases               # application layer (orquestra regras)
+      customers/
+        create-customer.ts
+        list-customers.ts
+        update-customer.ts
+      invoices/
+        create-invoice.ts
+        charge-invoice.ts
+        cancel-invoice.ts
+      ledger/
+        record-entry.ts
+      recurrences/
+        generate-due-entries.ts
+    /infra                   # implementações (db, filas, http, email, pagamentos...)
+      repos/
+        customer-repo.ts
+        invoice-repo.ts
+        ledger-repo.ts
+        recurrence-repo.ts
+        service-repo.ts
+      payments/
+        asaas.ts             # exemplo
+        stripe.ts            # exemplo
+      mail/
+        resend.ts            # exemplo
+      queue/
+        bullmq.ts            # conexão redis + helpers
+        workers/
+          generate-recurring.worker.ts
+          charge-due-invoices.worker.ts
+      http/
+        adapters/
+          next-handler.ts    # adapta use-case para handler do Next
+    /validation              # esquemas Zod
+      customers.ts
+      invoices.ts
+      services.ts
+      ledger.ts
+      recurrences.ts
+    /openapi
+      generator.ts           # compila Zod -> OpenAPI (zod-to-openapi)
+      schema.ts              # OpenAPI schema buildado em runtime/build
+  /integrations              # “portas de entrada” externas, webhooks, clients SDK
+    /asaas/
+      client.ts
+      webhooks.ts
+    /stripe/
+      client.ts
+      webhooks.ts
+
+/jobs                        # entrypoints de workers standalone (node)
+  charge-due-invoices.ts
+  generate-recurring.ts
+
+/scripts
+  build-openapi.ts           # roda no postbuild para gerar openapi.json
+  seed.ts
+
+/tests
+  /unit
+  /e2e
+
+prisma/
+  schema.prisma              # se preferir manter aqui  
