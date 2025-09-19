@@ -93,7 +93,7 @@ model Produto {
   id        String  @id @default(uuid())
   nome      String
   descricao String?
-  valor     BigInt
+  valor     Int
   tipo      String // servico | entrada
   direcao   String // entrada | saida
 
@@ -119,7 +119,7 @@ model ClienteProduto {
   quantidade Int
   nome       String
   descricao  String?
-  valor      BigInt
+  valor      Int
 
   status              String
   ativo               Boolean   @default(true)
@@ -145,7 +145,7 @@ enum BalancoTipo {
 model Balanco {
   id        String      @id @default(uuid())
   tipo      BalancoTipo
-  valor     BigInt
+  valor     Int
   descricao String?
 
   status              String
@@ -199,9 +199,9 @@ model Recorrencia {
 model Cobranca {
   id String @id @default(uuid())
 
-  subtotal BigInt
-  desconto BigInt
-  total    BigInt
+  subtotal Int
+  desconto Int
+  total    Int
   status   String // "pendente", "pago", "cancelado"
 
   data_de_vencimento     String
@@ -229,10 +229,10 @@ model Cobranca {
 model ItemCobranca {
   id              String  @id @default(uuid())
   quantidade      Int     @default(1)
-  valor_uinitario BigInt
-  subtotal        BigInt
-  desconto        BigInt
-  total           BigInt
+  valor_uinitario Int
+  subtotal        Int
+  desconto        Int
+  total           Int
   descricao       String?
 
   data_de_criacao     DateTime @default(now())

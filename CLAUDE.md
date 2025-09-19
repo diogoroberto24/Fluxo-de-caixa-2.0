@@ -42,6 +42,44 @@ docker-compose down     # Stop all services
 - **Forms**: React Hook Form with Zod validation
 - **State Management**: React hooks and context
 - **Background Services**: Redis for caching, Mailhog for email testing
+- **Architecture Pattern**: Clean Architecture with Domain-Driven Design principles
+
+### Clean Architecture Layers
+
+#### 1. **Shared Layer** (`/shared`)
+
+- **validation/**: Zod schemas compartilhados entre frontend e backend
+- **types/**: TypeScript types e interfaces
+- **constants/**: Constantes de negócio e configurações
+- **utils/**: Funções utilitárias puras (money, formatters, etc)
+
+#### 2. **Domain Layer** (`/server/domain`)
+
+- Entidades de negócio (Cliente, Cobranca, Servico, etc)
+- Value Objects (Money, Documento)
+- Regras de negócio puras
+- Sem dependências externas
+
+#### 3. **Application Layer** (`/server/use-cases`)
+
+- Casos de uso organizados por domínio
+- Orquestra entidades e repositories
+- Implementa lógica de aplicação
+- Validação de entrada com Zod
+
+#### 4. **Infrastructure Layer** (`/server/infra`)
+
+- **repos/**: Repositories com Prisma
+- **http/adapters/**: Adaptadores para Next.js
+- **queue/**: Workers com BullMQ
+- **payments/**: Integrações de pagamento
+- **mail/**: Serviços de email
+
+#### 5. **Presentation Layer** (`/app`)
+
+- API Routes (handlers Next.js)
+- React Components
+- Forms com validação Zod compartilhada
 
 ### Database Schema
 
@@ -58,21 +96,72 @@ Models use soft deletion pattern with `data_de_delecao` field and include metada
 
 ### Project Structure
 
-- `/app` - Next.js App Router pages and API routes
-  - `/api/v1/` - New versioned API endpoints (in development)
-  - `/api/` - Current API endpoints (being deprecated)
+- `/shared` - Código compartilhado entre client e server
+  - `/validation` - Schemas Zod para forms e API
+  - `/types` - TypeScript types/interfaces
+  - `/utils` - Funções utilitárias
+- `/app` - Next.js App Router
+  - `/api/v1/` - Nova API RESTful versionada
+  - `/(dashboard)` - Páginas do dashboard
+- `/server` - Lógica de servidor (Clean Architecture)
+  - `/domain` - Entidades e Value Objects
+  - `/use-cases` - Casos de uso
+  - `/infra` - Implementações de infraestrutura
 - `/components` - React components
-  - `/ui` - Reusable UI components (shadcn/ui based)
-  - Business logic components (dashboard, modals, management views)
-- `/lib` - Shared utilities and database setup
-  - `/generated/prisma` - Generated Prisma client (custom output location)
-- `/prisma` - Database schema and migrations
-- `/server` - Server configuration and utilities
-- `/tests` - Test files
+- `/lib` - Configurações e utilities Next.js
+  - `/generated/prisma` - Cliente Prisma gerado
+- `/prisma` - Schema do banco de dados
+- `/jobs` - Entry points para background workers
+- `/integrations` - Webhooks e integrações externas
 
 ### API Design
 
-The application is transitioning from `/api/` to `/api/v1/` endpoints. New endpoints should follow RESTful conventions and be placed in the versioned directory.
+#### Estrutura RESTful v1
+
+- `GET /api/v1/clientes` - Lista com paginação e filtros
+- `POST /api/v1/clientes` - Criar novo cliente
+- `GET /api/v1/clientes/:id` - Buscar cliente específico
+- `PUT /api/v1/clientes/:id` - Atualizar completo
+- `PATCH /api/v1/clientes/:id` - Atualizar parcial
+- `DELETE /api/v1/clientes/:id` - Soft delete
+
+#### Padrão de Resposta
+
+```typescript
+{
+  success: boolean,
+  data?: T,
+  error?: string,
+  message?: string
+}
+```
+
+### Uso dos Use Cases
+
+```typescript
+// Exemplo de uso em API Route
+import { CriarClienteUseCase } from '@/server/use-cases/clientes/criar-cliente'
+
+const useCase = new CriarClienteUseCase()
+const cliente = await useCase.execute(validatedData)
+```
+
+### Validação Compartilhada
+
+```typescript
+// Em formulário React
+import { createClienteSchema } from '@/shared/validation/clientes'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+const form = useForm({
+  resolver: zodResolver(createClienteSchema)
+})
+
+// Na API
+import { createClienteSchema } from '@/shared/validation/clientes'
+const validated = createClienteSchema.parse(body)
+```
 
 ### Environment Configuration
 
@@ -90,6 +179,9 @@ Use `.env.example` as template. Docker Compose provides local development servic
 
 - Prisma client is generated to `/lib/generated/prisma/` (non-standard location)
 - The application uses soft deletion for data integrity
-- All monetary values are stored as BigInt in the database
+- All monetary values are stored as Int in the database (cents)
 - Timestamps follow Portuguese naming: `data_de_criacao`, `data_de_atualizacao`, `data_de_delecao`
-- The UI is built with v0.app and synced via GitHub
+- Value Objects handle complex types (Money, Documento)
+- Use cases encapsulate business logic
+- Repositories abstract database access
+- Zod schemas are shared between frontend and backend
