@@ -7,57 +7,75 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // const useCase = new CriarClienteUseCase();
+//     const useCase = new CriarClienteUseCase();
 
-    // const result = await useCase.execute(body);
+//    const result = await useCase.execute(body);
 
-    // if (result instanceof AppError) {
-    //   return NextResponse.json(
-    //     {
-    //       success: false,
-    //       error: result.message,
-    //       code: result.code,
-    //     },
-    //     { status: result.statusCode }
-    //   );
-    // } else {
-    // return NextResponse.json(result, { status: 201 });
-    // }
+//     if (result instanceof AppError) {
+//       return NextResponse.json(
+//         {
+//           success: false,
+//           error: result.message,
+//           code: result.code,
+//         },
+//         { status: result.statusCode }
+//       );
+//     } else {
+//     return NextResponse.json(result, { status: 201 });
+//     }
 
-    const newClient = await prisma.client.create({
+    const newClient = await prisma.cliente.create({
       data: {
         nome: body.nome,
         documento: body.documento,
         email: body.email,
         telefone: body.telefone,
-        endereco: body.endereco,
-        cpf_socio: body.cpf_socio,
-        endereco_socio: body.endereco_socio,
+        cliente_rua: body.cliente_rua,
+        cliente_numero: body.cliente_numero,
+        cliente_bairro: body.cliente_bairro,
+        cliente_cidade: body.cliente_cidade,
+        cliente_estado: body.cliente_estado,
+        cliente_pais: body.cliente_pais,
+        socio_nome: body.socio_nome,
+        socio_documento: body.socio_documento,
+        socio_rua: body.socio_rua,
+        socio_numero: body.socio_numero,
+        socio_bairro: body.socio_bairro,
+        socio_cidade: body.socio_cidade,
+        socio_estado: body.socio_estado,
+        socio_pais: body.socio_pais,
         tributacao: body.tributacao,
         observacao: body.observacao,
+        status: body.status || "Ativo", //Assumindo um valor padrão se não for fornecido
+        ativo: body.ativo ?? true, //Assumindo um valor padrão se não for fornecido
       },
     });
 
     // Se houver um serviço selecionada, cria as associações
-    if (body.servicos && body.servicos.lenght > 0) {
-      for (const servicoId of body.servicos) {
-        await prisma.clienteServico.create({
+    if (body.produtos && body.produtos.length > 0) {
+      for (const produtoData of body.produtos) {
+        await prisma.clienteProduto.create({
           data: {
-            clienteId: newClient.id,
-            servicoId: servicoId,
-            ativo: true,
+            cliente_id: newClient.id,
+            produto_id: produtoData.produto_id,
+            quantidade: produtoData.quantidade || 1,
+            nome: produtoData.nome,
+            descricao: produtoData.descricao,
+            valor: produtoData.valor || 0,
+            status: produtoData.status || "Ativo",
+            ativo: produtoData.ativo ?? true,
           },
         });
       }
     }
 
     //Busca cliente com serviços associados
-    const clienteCompleto = await prisma.client.findUnique({
+    const clienteCompleto = await prisma.cliente.findUnique({
       where: { id: newClient.id },
       include: {
-        clienteServicos: {
+        produtos: {
           include: {
-            servico: true,
+            produto: true,
           },
         },
       },
@@ -76,7 +94,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, servicos, ...dataToUpdate } = body;
+    const { id, produtos, ...dataToUpdate } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -86,33 +104,38 @@ export async function PUT(request: Request) {
     }
 
     // Atualiza os dados do cliente
-    const updatedClient = await prisma.client.update({
+    const updatedClient = await prisma.cliente.update({
       where: { id },
       data: dataToUpdate,
     });
 
-    if (servicos) {
-      await prisma.clienteServico.deleteMany({
-        where: { clienteId: id },
+    if (body.produtos) {
+      await prisma.clienteProduto.deleteMany({
+        where: { cliente_id: id },
       });
 
-      for (const servicoId of servicos) {
-        await prisma.clienteServico.create({
+      for (const produtoData of body.produtos) {
+        await prisma.clienteProduto.create({
           data: {
-            clienteId: id,
-            servicoId: servicoId,
-            ativo: true,
+            cliente_id: id,
+            produto_id: produtoData.produto_id,
+            quantidade: produtoData.quantidade,
+            nome: produtoData.nome,
+            descricao: produtoData.descricao,
+            valor: produtoData.valor,
+            status: produtoData.status || "Ativo",
+            ativo: produtoData.ativo ?? true,
           },
         });
       }
     }
 
-    const clienteCompleto = await prisma.client.findUnique({
+    const clienteCompleto = await prisma.cliente.findUnique({
       where: { id },
       include: {
-        clienteServicos: {
+        produtos: {
           include: {
-            servico: true,
+            produto: true,
           },
         },
       },
@@ -131,11 +154,11 @@ export async function PUT(request: Request) {
 // Obter todos os clientes
 export async function GET() {
   try {
-    const clients = await prisma.client.findMany({
+    const clients = await prisma.cliente.findMany({
       include: {
-        clienteServicos: {
+        produtos: {
           include: {
-            servico: true,
+            produto: true,
           },
         },
       },
@@ -154,17 +177,17 @@ export async function GET() {
 // Obter um cliente específico
 export async function getClientById(id: string) {
   try {
-    const client = await prisma.client.findUnique({
+    const client = await prisma.cliente.findUnique({
       where: { id },
       include: {
-        clienteServicos: {
+        produtos: {
           include: {
-            servico: true,
+            produto: true,
           },
         },
         cobrancas: {
           include: {
-            itensCobranca: true,
+            itens: true,
           },
         },
         recorrencias: true,

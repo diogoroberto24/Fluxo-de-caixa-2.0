@@ -46,6 +46,7 @@ model Cliente {
   cliente_estado String
   cliente_pais   String
 
+  socio_nome      String?
   socio_documento String?
   socio_rua       String?
   socio_numero    String?

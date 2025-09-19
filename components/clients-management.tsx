@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -239,6 +239,63 @@ export function ClientsManagement() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [clientToView, setClientToView] = useState<Client | null>(null)
+  const [dbClients, setDbClients] = useState<Client[]>([])
+
+  // Buscar clientes do banco de dados
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch('/api/clients')
+        if (response.ok) {
+          const data = await response.json()
+          
+          // Mapear os clientes do banco para o formato esperado pelo componente
+          const formattedClients = data.map((client: any) => {
+            // Extrair os módulos dos produtos do cliente
+            const modules = client.produtos?.map((p: any) => p.nome) || []
+            
+            // Calcular o valor total dos honorários
+            const fees = client.produtos?.reduce((total: number, p: any) => total + (p.valor || 0), 0) || 0
+            
+            // Determinar o status com base no campo status do cliente
+            let status: "active" | "overdue" | "inactive" = "active"
+            if (client.status === "Inativo" || !client.ativo) {
+              status = "inactive"
+            } else if (client.status === "Inadimplente") {
+              status = "overdue"
+            }
+            
+            return {
+              id: client.id,
+              name: client.nome,
+              cnpj: client.documento,
+              modules: modules,
+              fees: fees,
+              status: status,
+              lastPayment: client.data_de_atualizacao ? new Date(client.data_de_atualizacao).toISOString().split('T')[0] : "",
+              phone: client.telefone,
+              email: client.email,
+              inactivationReason: client.observacao,
+              // Dados adicionais para edição
+              originalData: client
+            }
+          })
+          
+          // Adicionar os clientes do banco aos mockados
+          setDbClients(formattedClients)
+        }
+      } catch (error) {
+        console.error("Erro ao buscar clientes:", error)
+      }
+    }
+    
+    fetchClients()
+  }, [isClientModalOpen]) // Recarregar quando o modal de cliente for fechado
+
+  // Combinar clientes mockados com clientes do banco
+  useEffect(() => {
+    setClients([...mockClients, ...dbClients])
+  }, [dbClients])
 
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
@@ -281,7 +338,12 @@ export function ClientsManagement() {
   }
 
   const handleEditClient = (client: Client) => {
-    setSelectedClient(client)
+    // Se for um cliente do banco de dados, use os dados originais
+    if ('originalData' in client) {
+      setSelectedClient(client.originalData)
+    } else {
+      setSelectedClient(client)
+    }
     setIsEditMode(true)
     setIsClientModalOpen(true)
   }
