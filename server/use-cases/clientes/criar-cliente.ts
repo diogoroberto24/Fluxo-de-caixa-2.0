@@ -5,15 +5,17 @@ import {
   type CreateClienteInput,
 } from "@/server/infra/repos";
 import { createClienteSchema } from "@/shared/validation/clientes";
-import { ConflictError } from "@/shared/errors";
+import { ConflictError, ValidationError } from "@/shared/errors";
 import { UseCase } from "../use-case";
 
 export type CriarClienteRequest = CreateClienteInput;
 export type CriarClienteResult = Cliente;
+export type CriarClienteError = ConflictError | ValidationError;
 
 export class CriarClienteUseCase extends UseCase<
   CriarClienteRequest,
-  CriarClienteResult
+  CriarClienteResult,
+  CriarClienteError
 > {
   protected schema = createClienteSchema;
 

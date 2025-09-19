@@ -10,7 +10,9 @@ export abstract class UseCase<
 
   protected abstract handle(parsed: Data): Promise<SuccessResult>;
 
-  public async execute(data?: Data): Promise<SuccessResult | ErrorResult> {
+  public async execute(
+    data?: Data
+  ): Promise<SuccessResult | ErrorResult | ValidationError> {
     const parsed = this.validate(data);
 
     try {
@@ -20,38 +22,6 @@ export abstract class UseCase<
     } catch (error) {
       return this.handleError(error) as ErrorResult;
     }
-  }
-
-  protected objectToFormData(
-    obj: Record<string, any>,
-    formData = new FormData(),
-    parentKey = ""
-  ): FormData {
-    Object.entries(obj).forEach(([key, value]) => {
-      const fieldName = parentKey ? `${parentKey}[${key}]` : key;
-
-      if (value === null || value === undefined) {
-        return;
-      }
-
-      if (value instanceof File || value instanceof Blob) {
-        formData.append(
-          fieldName,
-          value,
-          value instanceof File ? value.name : "blob"
-        );
-      } else if (Array.isArray(value)) {
-        value.forEach((item, index) => {
-          formData.append(`${fieldName}[${index}]`, item);
-        });
-      } else if (typeof value === "object") {
-        this.objectToFormData(value, formData, fieldName);
-      } else {
-        formData.append(fieldName, value.toString());
-      }
-    });
-
-    return formData;
   }
 
   public validate(data?: Data) {
