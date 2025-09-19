@@ -1,0 +1,42 @@
+services:
+  database:
+    image: "bitnami/postgresql:latest"
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    environment:
+      POSTGRESQL_USERNAME: fluxo
+      POSTGRESQL_PASSWORD: fluxo
+      POSTGRESQL_DATABASE: fluxo
+    volumes:
+      - data_postgresql:/bitnami/postgresql
+    networks:
+      - app-net
+
+  redis:
+    image: "bitnami/redis"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    environment:
+      ALLOW_EMPTY_PASSWORD: yes
+    volumes:
+      - data_redos:/bitnami/redis/data
+    networks:
+      - app-net
+
+  mailer:
+    image: "mailhog/mailhog"
+    ports:
+      - "${MAILER_PORT:-1025}:1025"
+      - "${MAILER_HTTP_PORT:-8025}:8025"
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  data_postgresql:
+    driver: local
+  data_redos:
+    driver: local
