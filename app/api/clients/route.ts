@@ -46,6 +46,7 @@ export async function POST(request: Request) {
         socio_pais: body.socio_pais,
         tributacao: body.tributacao,
         observacao: body.observacao,
+        honorarios: body.honorarios || 0,
         status: body.status || "Ativo", //Assumindo um valor padrão se não for fornecido
         ativo: body.ativo ?? true, //Assumindo um valor padrão se não for fornecido
       },
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, produtos, ...dataToUpdate } = body;
+    const { id, produtos, modulos, ...dataToUpdate } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -106,7 +107,31 @@ export async function PUT(request: Request) {
     // Atualiza os dados do cliente
     const updatedClient = await prisma.cliente.update({
       where: { id },
-      data: dataToUpdate,
+      data: {
+        nome: dataToUpdate.nome,
+        documento: dataToUpdate.documento,
+        email: dataToUpdate.email,
+        telefone: dataToUpdate.telefone,
+        cliente_rua: dataToUpdate.cliente_rua,
+        cliente_numero: dataToUpdate.cliente_numero,
+        cliente_bairro: dataToUpdate.cliente_bairro,
+        cliente_cidade: dataToUpdate.cliente_cidade,
+        cliente_estado: dataToUpdate.cliente_estado,
+        cliente_pais: dataToUpdate.cliente_pais,
+        socio_nome: dataToUpdate.socio_nome,
+        socio_documento: dataToUpdate.socio_documento,
+        socio_rua: dataToUpdate.socio_rua,
+        socio_numero: dataToUpdate.socio_numero,
+        socio_bairro: dataToUpdate.socio_bairro,
+        socio_cidade: dataToUpdate.socio_cidade,
+        socio_estado: dataToUpdate.socio_estado,
+        socio_pais: dataToUpdate.socio_pais,
+        tributacao: dataToUpdate.tributacao,
+        honorarios: dataToUpdate.honorarios,
+        observacao: dataToUpdate.observacao,
+        status: dataToUpdate.status,
+        ativo: dataToUpdate.ativo
+      },
     });
 
     if (body.produtos) {

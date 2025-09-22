@@ -47,7 +47,33 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
     status: "Ativo",
     ativo: true
   })
+  
+  // Novo estado para controlar se o valor dos honorários foi modificado manualmente
+  const [honorariosModificados, setHonorariosModificados] = useState(false)
 
+  const modules = [
+    { id: "contabil", label: "Contábil" },
+    { id: "fiscal", label: "Fiscal" },
+    { id: "trabalhista", label: "Folha de Pagamento" },
+    { id: "societario", label: "Societário" },
+  ]
+
+  const taxationTypes = [
+    { value: "mei", label: "MEI" },
+    { value: "simples", label: "Simples Nacional" },
+    { value: "presumido", label: "Lucro Presumido" },
+    { value: "real", label: "Lucro Real" },
+  ]
+
+  // Função para calcular o valor sugerido de honorários com base nos módulos selecionados
+  const calcularHonorariosSugeridos = (modulos: string[]) => {
+    // Valor base por módulo (R$ 1.000,00)
+    const valorPorModulo = 1000
+    return modulos.length * valorPorModulo
+  }
+
+  // Remover a duplicação das constantes modules e taxationTypes aqui
+  
   useEffect(() => {
     if (isEditMode && clientData) {
       const moduleMapping: Record<string, string> = {
@@ -57,9 +83,30 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
         Societário: "societario",
       }
 
-      const mappedModules =
-        clientData.modulos?.map((module: string) => moduleMapping[module] || module.toLowerCase()) || []
+      // Extrai os módulos dos produtos do cliente
+      let mappedModules: string[] =[];
 
+      if (clientData.produtos && Array.isArray(clientData.produtos)){
+        // Mapea os nomes dos produtos para os IDs dos módulos
+        mappedModules = clientData.produtos.map((produto: any) => {
+          const produtoNome = produto.nome || (produto.produto && produto.produto.nome);
+
+          // Verifica se o nome do produto corresponde a algum módulo
+          for(const [moduloLabel, moduloId] of Object.entries(moduleMapping)){
+            if(produtoNome === moduloLabel){
+              return moduloId;
+            }
+          }
+
+          // Se não encontrar correspondência, tenta converter diretamente
+          return moduleMapping[produtoNome] || produtoNome.toLowerCase();
+        }).filter(Boolean); //Remove valores vazios
+      }
+
+      // Se clientData.modulos existe (para clientes mockados), usar diretamente
+      else if (clientData.modulos && Array.isArray(clientData.modulos)){
+        mappedModules = clientData.modulos.map((module: string) => moduleMapping[module] || module.toLowerCase());
+      }
       setFormData({
         nome: clientData.nome || "",
         documento: clientData.documento || "",
@@ -86,6 +133,11 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
         status: clientData.status || "Ativo",
         ativo: clientData.ativo !== undefined ? clientData.ativo : true
       })
+      
+      // Se o cliente já tem honorários definidos, considerar como modificado manualmente
+      if (clientData.honorarios) {
+        setHonorariosModificados(true)
+      }
     } else if (!isEditMode) {
       setFormData({
         nome: "",
@@ -113,22 +165,45 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
         status: "Ativo",
         ativo: true
       })
+      setHonorariosModificados(false)
     }
   }, [isEditMode, clientData, isOpen])
 
-  const modules = [
-    { id: "contabil", label: "Contábil" },
-    { id: "fiscal", label: "Fiscal" },
-    { id: "trabalhista", label: "Folha de Pagamento" },
-    { id: "societario", label: "Societário" },
-  ]
+  // Adicionar um useEffect para atualizar os honorários sugeridos quando os módulos mudarem
+  useEffect(() => {
+    // Só atualiza automaticamente se o usuário não tiver modificado manualmente
+    if (!honorariosModificados && formData.modulos.length > 0) {
+      const valorSugerido = calcularHonorariosSugeridos(formData.modulos)
+      setFormData(prev => ({
+        ...prev,
+        honorarios: valorSugerido.toString()
+      }))
+    }
+  }, [formData.modulos, honorariosModificados])
 
-  const taxationTypes = [
-    { value: "mei", label: "MEI" },
-    { value: "simples", label: "Simples Nacional" },
-    { value: "presumido", label: "Lucro Presumido" },
-    { value: "real", label: "Lucro Real" },
-  ]
+  // Modificar o handler de módulos para resetar o flag de honorários modificados quando todos os módulos forem desmarcados
+  const handleModuleChange = (moduleId: string, checked: boolean) => {
+    const updatedModules = checked
+      ? [...formData.modulos, moduleId]
+      : formData.modulos.filter((id) => id !== moduleId)
+    
+    setFormData({ ...formData, modulos: updatedModules })
+    
+    // Se todos os módulos forem desmarcados, resetar o flag de honorários modificados
+    if (updatedModules.length === 0) {
+      setHonorariosModificados(false)
+      setFormData(prev => ({
+        ...prev,
+        honorarios: ""
+      }))
+    }
+  }
+
+  // Modificar o handler de honorários para marcar como modificado manualmente
+  const handleHonorariosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setHonorariosModificados(true)
+    setFormData({ ...formData, honorarios: e.target.value })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -186,10 +261,31 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
       // Aguardar a criação de todos os produtos
       const produtosFormatados = await Promise.all(produtosPromises);
 
-      // Agora criar ou atualizar o cliente com os produtos
+      // Converter honorarios para número
+      const honorariosValue = parseInt(formData.honorarios) || 0
+      
+      // Se estiver em modo de edição e os honorários foram alterados, registra no histórico
+      if (isEditMode && clientData && clientData.honorarios !== honorariosValue){
+        await fetch('/api/historico-honorario', {	
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            cliente_id: clientData.id,
+            valor_anterior: clientData.honorarios || 0,
+            valor_novo: honorariosValue,
+            motivo: "Alteração manual de honorários",
+            alterado_por: "Sistema" // Idealmente, usar o nome do usuário logado
+          }),
+        });
+      }
+      // Agora criar ou atualizar o cliente com os produtos e honorários
       const apiUrl = '/api/clients';
       const method = isEditMode ? 'PUT' : 'POST';
-      const payload = isEditMode ? { id: clientData.id, ...formData, produtos: produtosFormatados } : { ...formData, produtos: produtosFormatados };
+      const payload = isEditMode 
+        ? { id: clientData.id, ...formData, honorarios: honorariosValue, produtos: produtosFormatados } 
+        : { ...formData, honorarios: honorariosValue, produtos: produtosFormatados };
 
       const response = await fetch(apiUrl, {
         method: method,
@@ -245,13 +341,6 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
         variant: "destructive",
       })
     }
-  }
-
-  const handleModuleChange = (moduleId: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      modulos: checked ? [...prev.modulos, moduleId] : prev.modulos.filter((m) => m !== moduleId),
-    }))
   }
 
   return (

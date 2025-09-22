@@ -255,7 +255,7 @@ export function ClientsManagement() {
             const modules = client.produtos?.map((p: any) => p.nome) || []
             
             // Calcular o valor total dos honorários
-            const fees = client.produtos?.reduce((total: number, p: any) => total + (p.valor || 0), 0) || 0
+            const fees = client.honorarios || 0
             
             // Determinar o status com base no campo status do cliente
             let status: "active" | "overdue" | "inactive" = "active"
@@ -354,28 +354,63 @@ export function ClientsManagement() {
     setSelectedClient(null)
   }
 
+  const [feeHistory, setFeeHistory] = useState<Record<string, FeeHistory[]>>({});
+
+  const getClientFeeHistory = (clientId: string): FeeHistory[] => {
+    if (feeHistory[clientId]){
+      return feeHistory[clientId];
+    }
+
+    return mockFeeHistory[clientId] || [
+      {
+        date: new Date().toISOString().split("T")[0],
+        previousFee: 0,
+        newFee: clients.find((c) => c.id === clientId)?.fees || 0,
+        reason: "Cadastro inicial do cliente",
+        changedBy: "Sistema",
+      },
+    ];
+  }
+
+  // Busca histórico do honorário
+  const fetchFeeHistory = async (clientId: string) => {
+    try{
+      const response = await fetch(`/api/historico-honorario?clientId=${clientId}`);
+      if (response.ok){
+        const data = await response.json();
+
+        // Converte o formato da API para o formato usado no componente
+        const formattedHistory = data.map((item: any) => ({
+          date: item.data,
+          previousFee: item.valor_anterior,
+          newFee: item.valor_novo,
+          reason: item.motivo,
+          changedBy: item.alterado_por,
+        }));
+
+        setFeeHistory(prev => ({
+          ...prev,
+          [clientId]: formattedHistory
+        }));
+      }
+    } catch (error){
+      console.log("Erro ao buscar histórico de honorário: ", error);
+    }
+  }
+
   const handleViewClient = (client: Client) => {
     setClientToView(client)
     setIsViewModalOpen(true)
+
+    // Buscar o histórico de honorários quando visualizar o cliente
+    if (client.id){
+      fetchFeeHistory(client.id);
+    }
   }
 
   const handleViewModalClose = () => {
     setIsViewModalOpen(false)
     setClientToView(null)
-  }
-
-  const getClientFeeHistory = (clientId: string): FeeHistory[] => {
-    return (
-      mockFeeHistory[clientId] || [
-        {
-          date: "2024-01-01",
-          previousFee: 0,
-          newFee: clients.find((c) => c.id === clientId)?.fees || 0,
-          reason: "Cadastro inicial do cliente",
-          changedBy: "Sistema",
-        },
-      ]
-    )
   }
 
   return (

@@ -31,6 +31,22 @@ model Usuario {
 
   @@map("usuarios")
 }
+model HistoricoHonorario{
+  id              String  @id @default(uuid())
+  cliente_id      String
+  data            DateTime @default(now())
+  valor_anterior  Int
+  valor_novo      Int
+  motivo          String
+  alterado_por    String  @default("Sistema")
+
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+
+  cliente Cliente @relation(fields: [cliente_id], references: [id])
+
+  @@map("historico_honorarios")
+}
 
 model Cliente {
   id        String @id @default(cuid())
@@ -56,6 +72,7 @@ model Cliente {
   socio_pais      String?
 
   tributacao String
+  honorarios Int      @default(0) // Campo adicionado para armazenar o valor dos honorários
   observacao String?
 
   status              String
@@ -69,6 +86,7 @@ model Cliente {
   produtos     ClienteProduto[]
   cobrancas    Cobranca[]
   recorrencias Recorrencia[]
+  historico_honorarios  HistoricoHonorario[]
 
   @@map("clientes")
 }
