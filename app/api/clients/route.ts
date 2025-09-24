@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/db";
+
 // import { CriarClienteUseCase } from "@/server/use-cases/clientes/criar-cliente";
 // import { AppError } from "@/shared/errors";
 

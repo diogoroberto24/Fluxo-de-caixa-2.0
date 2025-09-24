@@ -1,15 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, TrendingDown, Users, AlertTriangle, RefreshCw, Play, Eye, UserCheck } from "lucide-react"
 import { RevenueChart } from "@/components/revenue-chart"
+// Certifique-se de que a importação está correta
 import { RecentPayments } from "@/components/recent-payments"
 import { LiquidGlassEffect } from "@/components/liquid-glass-effect"
 import { ClientsModal } from "@/components/clients-modal"
 
+// Definir a interface do cliente
+interface Client {
+  id: string
+  name: string
+  cnpj: string
+  modules: string[]
+  fees: number
+  status: "active" | "overdue" | "inactive"
+  lastPayment: string
+  phone: string
+  email: string
+}
+
+// Mover estas constantes para dentro do componente Dashboard
 const kpiData = [
   {
     title: "Faturamento Previsto",
@@ -59,6 +74,39 @@ const kpiData = [
 export function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedClientType, setSelectedClientType] = useState<"active" | "overdue" | "all">("active")
+  const [clients, setClients] = useState<Client[]>([])
+  const [loading, setLoading] = useState(true)
+  
+  // Buscar dados reais do banco de dados
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch('/api/clients')
+        if (response.ok) {
+          const data = await response.json()
+          setClients(data)
+        } else {
+          console.error('Erro ao buscar clientes')
+        }
+      } catch (error) {
+        console.error('Erro ao buscar clientes:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchClients()
+  }, [])
+  
+  // Modificar as funções de cálculo para excluir clientes inativos
+  const totalClients = clients.filter(client => client.status !== "inactive").length;
+  const activeClients = clients.filter(client => client.status === "active").length;
+  const overdueClients = clients.filter(client => client.status === "overdue").length;
+
+  // Calcular o faturamento previsto apenas com clientes ativos
+  const expectedRevenue = clients
+    .filter(client => client.status !== "inactive")
+    .reduce((total, client) => total + client.fees, 0);
 
   const handleKpiClick = (kpi: (typeof kpiData)[0]) => {
     if (kpi.clickable && kpi.clientType) {
@@ -136,7 +184,9 @@ export function Dashboard() {
           <RevenueChart />
         </LiquidGlassEffect>
         <LiquidGlassEffect>
-          <RecentPayments />
+          <div className="grid gap-4 md:col-span-2">
+            <RecentPayments />
+          </div>
         </LiquidGlassEffect>
       </div>
 

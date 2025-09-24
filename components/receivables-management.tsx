@@ -184,7 +184,9 @@ export function ReceivablesManagement() {
         isOpen={isPaymentModalOpen}
         onClose={handleModalClose}
         isEditMode={!!editingReceivable}
-        receivableData={editingReceivable}
+        clientId={editingReceivable?.id?.toString() || ""}
+        clientName={editingReceivable?.client || ""}
+        cobrancaId={editingReceivable?.id?.toString() || ""}
       />
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

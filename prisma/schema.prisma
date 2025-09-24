@@ -227,7 +227,7 @@ model Cobranca {
   data_de_pagamento      DateTime?
   metodo_de_pagamento    String?
   data_de_cancelamento   DateTime?
-  motivo_de_cancelamento String
+  motivo_de_cancelamento String?
 
   observacoes String?
 
@@ -248,7 +248,7 @@ model Cobranca {
 model ItemCobranca {
   id              String  @id @default(uuid())
   quantidade      Int     @default(1)
-  valor_uinitario Int
+  valor_unitario  Int
   subtotal        Int
   desconto        Int
   total           Int

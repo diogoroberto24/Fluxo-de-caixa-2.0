@@ -47,6 +47,7 @@ const recentPayments = [
   },
 ]
 
+// Certifique-se de que a exportação está correta
 export function RecentPayments() {
   return (
     <Card className="bg-card border-border h-full">

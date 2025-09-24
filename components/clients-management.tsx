@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Plus, Search, Eye, Edit, DollarSign, UserX, Users, Calendar, Phone, Building, CreditCard } from "lucide-react"
+import { Plus, Search, Eye, Edit, DollarSign, UserX, Users, Calendar, Phone, Building, CreditCard, UserCheck } from "lucide-react"
 import { ClientModal } from "@/components/client-modal"
 import { PaymentModal } from "@/components/payment-modal"
 
@@ -24,6 +24,8 @@ interface Client {
   phone: string
   email: string
   inactivationReason?: string
+  tributacao?: string
+  
 }
 
 interface FeeHistory {
@@ -226,6 +228,21 @@ const mockClients: Client[] = [
   },
 ]
 
+const getTributacaoDisplay = (tributacaoValue?: string) => {
+  switch (tributacaoValue) {
+    case "mei":
+      return "MEI";
+    case "simples":
+      return "SIMPLES NACIONAL";
+    case "presumido":
+      return "LUCRO PRESUMIDO";
+    case "real":
+      return "LUCRO REAL";
+    default:
+      return "Não informado";
+  }
+};
+
 export function ClientsManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isClientModalOpen, setIsClientModalOpen] = useState(false)
@@ -240,6 +257,11 @@ export function ClientsManagement() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [clientToView, setClientToView] = useState<Client | null>(null)
   const [dbClients, setDbClients] = useState<Client[]>([])
+  
+  // Estados para reativação
+  const [isReactivateModalOpen, setIsReactivateModalOpen] = useState(false)
+  const [clientToReactivate, setClientToReactivate] = useState<string | null>(null)
+  const [reactivationReason, setReactivationReason] = useState("")
 
   // Buscar clientes do banco de dados
   useEffect(() => {
@@ -277,7 +299,8 @@ export function ClientsManagement() {
               email: client.email,
               inactivationReason: client.observacao,
               // Dados adicionais para edição
-              originalData: client
+              originalData: client,
+              tributacao: client.tributacao,
             }
           })
           
@@ -318,19 +341,56 @@ export function ClientsManagement() {
     setIsInactivateModalOpen(true)
   }
 
-  const confirmInactivation = () => {
+  // Modificar a função confirmInactivation para realmente inativar o cliente
+  const confirmInactivation = async () => {
     if (clientToInactivate && inactivationReason.trim()) {
-      setClients((prevClients) =>
-        prevClients.map((client) =>
-          client.id === clientToInactivate ? { ...client, status: "inactive" as const, inactivationReason } : client,
-        ),
-      )
-      setIsInactivateModalOpen(false)
-      setClientToInactivate(null)
-      setInactivationReason("")
+      try {
+        // Encontrar o cliente a ser inativado
+        const clientToUpdate = clients.find(client => client.id === clientToInactivate);
+        
+        if (clientToUpdate) {
+          // Preparar os dados para atualização
+          const updateData = {
+            id: clientToInactivate,
+            status: "Inativo",
+            ativo: false,
+            observacao: inactivationReason
+          };
+          
+          // Chamar a API para atualizar o cliente
+          const response = await fetch(`/api/clients/${clientToInactivate}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updateData),
+          });
+          
+          if (response.ok) {
+            // Atualizar o estado local
+            setClients((prevClients) =>
+              prevClients.map((client) =>
+                client.id === clientToInactivate ? 
+                  { ...client, status: "inactive" as const, inactivationReason } : 
+                  client
+              )
+            );
+            
+            // Fechar o modal e limpar os campos
+            setIsInactivateModalOpen(false);
+            setClientToInactivate(null);
+            setInactivationReason("");
+          } else {
+            throw new Error('Falha ao inativar cliente');
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao inativar cliente:", error);
+        // Aqui você poderia adicionar uma notificação de erro
+      }
     }
-  }
-
+  };
+  
   const cancelInactivation = () => {
     setIsInactivateModalOpen(false)
     setClientToInactivate(null)
@@ -411,6 +471,69 @@ export function ClientsManagement() {
   const handleViewModalClose = () => {
     setIsViewModalOpen(false)
     setClientToView(null)
+  }
+
+  // Função para iniciar o processo de reativação
+  const handleReactivateClient = (clientId: string) => {
+    setClientToReactivate(clientId)
+    setIsReactivateModalOpen(true)
+  }
+
+  // Função para confirmar a reativação
+  const confirmReactivation = async () => {
+    if (clientToReactivate && reactivationReason.trim()) {
+      try {
+        // Encontrar o cliente a ser reativado
+        const clientToUpdate = clients.find(client => client.id === clientToReactivate);
+        
+        if (clientToUpdate) {
+          // Preparar os dados para atualização
+          const updateData = {
+            id: clientToReactivate,
+            status: "Ativo",
+            ativo: true,
+            observacao: ""
+          };
+          
+          // Chamar a API para atualizar o cliente
+          const response = await fetch(`/api/clients/${clientToReactivate}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updateData),
+          });
+          
+          if (response.ok) {
+            // Atualizar o estado local
+            setClients((prevClients) =>
+              prevClients.map((client) =>
+                client.id === clientToReactivate ? 
+                  { ...client, status: "active" as const, inactivationReason: "" } : 
+                  client
+              )
+            );
+            
+            // Fechar o modal e limpar os campos
+            setIsReactivateModalOpen(false);
+            setClientToReactivate(null);
+            setReactivationReason("");
+          } else {
+            throw new Error('Falha ao reativar cliente');
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao reativar cliente:", error);
+        // Aqui você poderia adicionar uma notificação de erro
+      }
+    }
+  };
+
+  // Função para cancelar a reativação
+  const cancelReactivation = () => {
+    setIsReactivateModalOpen(false)
+    setClientToReactivate(null)
+    setReactivationReason("")
   }
 
   return (
@@ -518,7 +641,7 @@ export function ClientsManagement() {
                       <Button variant="ghost" size="sm" onClick={() => handleViewClient(client)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      {!showInactiveClients && (
+                      {!showInactiveClients ? (
                         <>
                           <Button variant="ghost" size="sm" onClick={() => handleEditClient(client)}>
                             <Edit className="h-4 w-4" />
@@ -535,6 +658,15 @@ export function ClientsManagement() {
                             <UserX className="h-4 w-4" />
                           </Button>
                         </>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReactivateClient(client.id)}
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          <UserCheck className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                   </TableCell>
@@ -551,7 +683,7 @@ export function ClientsManagement() {
         isEditMode={isEditMode}
         clientData={selectedClient}
       />
-      <PaymentModal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} client={selectedClient} />
+      <PaymentModal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} clientId={selectedClient?.id || ''} clientName={selectedClient?.name || ''} />
 
       {/* Modal de confirmação de inativação */}
       <Dialog open={isInactivateModalOpen} onOpenChange={setIsInactivateModalOpen}>
@@ -612,24 +744,19 @@ export function ClientsManagement() {
                       <p className="text-sm">{clientToView.cnpj}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Status</Label>
-                      <div className="mt-1">
-                        <Badge
-                          variant={
-                            clientToView.status === "active"
-                              ? "default"
-                              : clientToView.status === "inactive"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                        >
-                          {clientToView.status === "active"
-                            ? "Em dia"
-                            : clientToView.status === "inactive"
-                              ? "Inativo"
-                              : "Inadimplente"}
-                        </Badge>
-                      </div>
+                      <Label className="text-sm font-medium text-muted-foreground">Tipo de Tributação</Label>
+                      <p className="text-sm">
+                          {!clientToView.tributacao ? "Não definido" : 
+                          clientToView.tributacao === "mei" 
+                            ? "MEI" 
+                            : clientToView.tributacao === "simples" 
+                              ? "Simples Nacional" 
+                              : clientToView.tributacao === "presumido" 
+                                ? "Lucro Presumido" 
+                                : clientToView.tributacao === "real"
+                                  ? "Lucro Real" 
+                                  : "Outro"}         
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -688,6 +815,26 @@ export function ClientsManagement() {
                   <CardContent>
                     <p className="text-2xl font-bold text-green-600">R$ {clientToView.fees.toLocaleString("pt-BR")}</p>
                     <p className="text-sm text-muted-foreground">Valor mensal</p>
+                    <div className="mt-2">
+                      <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                      <div className="mt-1">
+                        <Badge
+                          variant={
+                            clientToView.status === "active"
+                              ? "default"
+                              : clientToView.status === "inactive"
+                                ? "secondary"
+                                : "destructive"
+                          }
+                        >
+                          {clientToView.status === "active"
+                            ? "Em dia"
+                            : clientToView.status === "inactive"
+                              ? "Inativo"
+                              : "Inadimplente"}
+                        </Badge>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -735,6 +882,42 @@ export function ClientsManagement() {
           <DialogFooter>
             <Button variant="outline" onClick={handleViewModalClose}>
               Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de confirmação de reativação */}
+      <Dialog open={isReactivateModalOpen} onOpenChange={setIsReactivateModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Reativação do Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Tem certeza que deseja reativar este cliente? Todas as funcionalidades que foram perdidas na inativação serão restauradas.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="reactivation-reason">Motivo da reativação *</Label>
+              <Textarea
+                id="reactivation-reason"
+                placeholder="Digite o motivo da reativação do cliente..."
+                value={reactivationReason}
+                onChange={(e) => setReactivationReason(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelReactivation}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={confirmReactivation}
+              disabled={!reactivationReason.trim()}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Confirmar Reativação
             </Button>
           </DialogFooter>
         </DialogContent>
