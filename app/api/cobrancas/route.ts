@@ -2,16 +2,35 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/db';
 
 // Obter todas as cobranças
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const clienteEventualId = searchParams.get('cliente_eventual_id');
+    const clienteId = searchParams.get('cliente_id');
+
+    const whereClause: any = {};
+    
+    if (clienteEventualId) {
+      whereClause.cliente_eventual_id = clienteEventualId;
+    }
+    
+    if (clienteId) {
+      whereClause.cliente_id = clienteId;
+    }
+
     const cobrancas = await prisma.cobranca.findMany({
+      where: whereClause,
       include: {
         cliente: true,
+        cliente_eventual: true,
         itens: {
           include: {
             produto: true
           }
         }
+      },
+      orderBy: {
+        data_de_vencimento: 'asc'
       }
     });
     

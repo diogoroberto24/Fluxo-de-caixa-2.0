@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Plus, Search, Eye, Edit, Trash2, ArrowLeft } from "lucide-react"
+import { Plus, Search, Eye, Edit, Trash2, ArrowLeft, CreditCard } from "lucide-react"
 import { EventualClientModal } from "./eventual-client-modal"
+import { ParcelasManagementModal } from "./parcelas-management-modal"
 
 interface EventualClient {
   id: string
@@ -45,6 +46,8 @@ export function EventualClientsManagement({ onNavigate }: EventualClientsManagem
   const [isEditMode, setIsEditMode] = useState(false)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [clientToView, setClientToView] = useState<EventualClient | null>(null)
+  const [isParcelasModalOpen, setIsParcelasModalOpen] = useState(false)
+  const [clientForParcelas, setClientForParcelas] = useState<EventualClient | null>(null)
 
   // Buscar clientes eventuais do banco de dados
   useEffect(() => {
@@ -215,6 +218,11 @@ export function EventualClientsManagement({ onNavigate }: EventualClientsManagem
     }
   }
 
+  const handleManageParcelas = (client: EventualClient) => {
+    setClientForParcelas(client)
+    setIsParcelasModalOpen(true)
+  }
+
   return (
     <div className="container mx-auto p-6">
       {/* Header */}
@@ -320,13 +328,24 @@ export function EventualClientsManagement({ onNavigate }: EventualClientsManagem
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewClient(client)}
+                        title="Visualizar cliente"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleManageParcelas(client)}
+                        title="Gerenciar parcelas"
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <CreditCard className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEditClient(client)}
+                        title="Editar cliente"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -335,6 +354,7 @@ export function EventualClientsManagement({ onNavigate }: EventualClientsManagem
                         size="sm"
                         onClick={() => handleDeleteClient(client.id)}
                         className="text-destructive hover:text-destructive"
+                        title="Excluir cliente"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -436,6 +456,16 @@ export function EventualClientsManagement({ onNavigate }: EventualClientsManagem
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Gerenciamento de Parcelas */}
+      <ParcelasManagementModal
+        isOpen={isParcelasModalOpen}
+        onClose={() => {
+          setIsParcelasModalOpen(false)
+          setClientForParcelas(null)
+        }}
+        client={clientForParcelas}
+      />
     </div>
   )
 }
