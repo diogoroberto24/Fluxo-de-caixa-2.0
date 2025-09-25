@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
         observacoes: data.observacoes || null,
         valor_entrada: data.valor_entrada || null,
         quantidade_parcelas: data.quantidade_parcelas || null,
-        parcelas_config: data.parcelas ? JSON.stringify(data.parcelas) : null
+        valor_parcelas: data.valor_parcelas || null,
+        parcelas_config: data.parcelas && data.parcelas.length > 0 ? data.parcelas : null
       }
     })
 
@@ -71,7 +72,7 @@ async function createReceivables(client: any, parcelas: any[] = []) {
             total: client.valor_servico,
             status: 'pago', // À vista é considerado como pago
             data_de_vencimento: today.toISOString().split('T')[0],
-            data_de_pagamento: today.toISOString().split('T')[0],
+            data_de_pagamento: today,
             observacoes: `Pagamento à vista - ${client.nome}`,
             cliente_eventual_id: client.id,
             metodo_de_pagamento: 'dinheiro'
@@ -82,10 +83,11 @@ async function createReceivables(client: any, parcelas: any[] = []) {
         await prisma.balanco.create({
           data: {
             valor: client.valor_servico,
-            tipo: 'receita',
+            tipo: 'ENTRADA',
             descricao: `Receita à vista - Cliente eventual: ${client.nome}`,
-            data: today.toISOString().split('T')[0],
-            categoria: 'Serviços'
+            status: 'confirmado',
+            data_de_fato: today,
+            metadata: { categoria: 'Serviços' }
           }
         })
         break
@@ -103,7 +105,7 @@ async function createReceivables(client: any, parcelas: any[] = []) {
               total: parcela.valor,
               status: isPrimeiraParcela ? 'pago' : 'pendente', // Primeira parcela paga, demais pendentes
               data_de_vencimento: parcela.data_vencimento,
-              data_de_pagamento: isPrimeiraParcela ? today.toISOString().split('T')[0] : null,
+              data_de_pagamento: isPrimeiraParcela ? today : null,
               observacoes: `Parcela ${i + 1}/${parcelas.length} - ${client.nome}`,
               cliente_eventual_id: client.id,
               metodo_de_pagamento: isPrimeiraParcela ? 'dinheiro' : null
@@ -115,10 +117,11 @@ async function createReceivables(client: any, parcelas: any[] = []) {
             await prisma.balanco.create({
               data: {
                 valor: parcela.valor,
-                tipo: 'receita',
+                tipo: 'ENTRADA',
                 descricao: `Receita parcelada (1ª parcela) - Cliente eventual: ${client.nome}`,
-                data: today.toISOString().split('T')[0],
-                categoria: 'Serviços'
+                status: 'confirmado',
+                data_de_fato: today,
+                metadata: { categoria: 'Serviços' }
               }
             })
           } else {
@@ -127,11 +130,11 @@ async function createReceivables(client: any, parcelas: any[] = []) {
             await prisma.balanco.create({
               data: {
                 valor: parcela.valor,
-                tipo: 'receita',
+                tipo: 'ENTRADA',
                 descricao: `Receita prevista (parcela ${i + 1}/${parcelas.length}) - Cliente eventual: ${client.nome}`,
-                data: parcela.data_vencimento,
-                categoria: 'Serviços',
-                metadata: JSON.stringify({ tipo_faturamento: 'previsto' })
+                status: 'previsto',
+                data_de_fato: dataVencimento,
+                metadata: { categoria: 'Serviços', tipo_faturamento: 'previsto' }
               }
             })
           }
@@ -148,7 +151,7 @@ async function createReceivables(client: any, parcelas: any[] = []) {
               total: client.valor_entrada,
               status: 'pago',
               data_de_vencimento: today.toISOString().split('T')[0],
-              data_de_pagamento: today.toISOString().split('T')[0],
+              data_de_pagamento: today,
               observacoes: `Entrada - ${client.nome}`,
               cliente_eventual_id: client.id,
               metodo_de_pagamento: 'dinheiro'
@@ -159,10 +162,11 @@ async function createReceivables(client: any, parcelas: any[] = []) {
           await prisma.balanco.create({
             data: {
               valor: client.valor_entrada,
-              tipo: 'receita',
+              tipo: 'ENTRADA',
               descricao: `Receita entrada - Cliente eventual: ${client.nome}`,
-              data: today.toISOString().split('T')[0],
-              categoria: 'Serviços'
+              status: 'confirmado',
+              data_de_fato: today,
+              metadata: { categoria: 'Serviços' }
             }
           })
         }
@@ -184,14 +188,15 @@ async function createReceivables(client: any, parcelas: any[] = []) {
           })
 
           // Adicionar ao faturamento previsto
+          const dataVencimento = new Date(parcela.data_vencimento)
           await prisma.balanco.create({
             data: {
               valor: parcela.valor,
-              tipo: 'receita',
+              tipo: 'ENTRADA',
               descricao: `Receita prevista (parcela ${i + 1}/${parcelas.length}) - Cliente eventual: ${client.nome}`,
-              data: parcela.data_vencimento,
-              categoria: 'Serviços',
-              metadata: JSON.stringify({ tipo_faturamento: 'previsto' })
+              status: 'previsto',
+              data_de_fato: dataVencimento,
+              metadata: { categoria: 'Serviços', tipo_faturamento: 'previsto' }
             }
           })
         }

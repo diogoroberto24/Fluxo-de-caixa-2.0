@@ -204,25 +204,54 @@ export function EventualClientModal({
   }
 
   const formatCurrency = (value: string) => {
-    const numericValue = value.replace(/\D/g, "")
-    const formattedValue = (parseInt(numericValue) / 100).toFixed(2)
+    // Remove tudo que não é dígito ou ponto decimal
+    const numericValue = value.replace(/[^\d.]/g, "")
+    
+    // Se já tem ponto decimal, não processa como centavos
+    if (numericValue.includes('.')) {
+      const parts = numericValue.split('.')
+      if (parts.length === 2 && parts[1].length <= 2) {
+        return parseFloat(numericValue).toFixed(2)
+      }
+    }
+    
+    // Se não tem ponto decimal, trata como centavos
+    const onlyDigits = numericValue.replace(/\D/g, "")
+    if (onlyDigits.length === 0) return "0.00"
+    
+    const formattedValue = (parseInt(onlyDigits) / 100).toFixed(2)
     return formattedValue
   }
 
   const handleValueChange = (value: string) => {
-    const formatted = formatCurrency(value)
-    setFormData(prev => ({ ...prev, valor_servico: parseFloat(formatted) }))
+    // Se o valor já está no formato correto (com ponto), usa diretamente
+    if (value.includes('.') && /^\d+\.\d{0,2}$/.test(value)) {
+      setFormData(prev => ({ ...prev, valor_servico: parseFloat(value) || 0 }))
+    } else {
+      const formatted = formatCurrency(value)
+      setFormData(prev => ({ ...prev, valor_servico: parseFloat(formatted) }))
+    }
   }
 
   const handleEntradaChange = (value: string) => {
-    const formatted = formatCurrency(value)
-    setFormData(prev => ({ ...prev, valor_entrada: parseFloat(formatted) }))
+    // Se o valor já está no formato correto (com ponto), usa diretamente
+    if (value.includes('.') && /^\d+\.\d{0,2}$/.test(value)) {
+      setFormData(prev => ({ ...prev, valor_entrada: parseFloat(value) || 0 }))
+    } else {
+      const formatted = formatCurrency(value)
+      setFormData(prev => ({ ...prev, valor_entrada: parseFloat(formatted) }))
+    }
   }
 
   // Nova função para lidar com mudanças no valor das parcelas
   const handleParcelasChange = (value: string) => {
-    const formatted = formatCurrency(value)
-    setFormData(prev => ({ ...prev, valor_parcelas: parseFloat(formatted) }))
+    // Se o valor já está no formato correto (com ponto), usa diretamente
+    if (value.includes('.') && /^\d+\.\d{0,2}$/.test(value)) {
+      setFormData(prev => ({ ...prev, valor_parcelas: parseFloat(value) || 0 }))
+    } else {
+      const formatted = formatCurrency(value)
+      setFormData(prev => ({ ...prev, valor_parcelas: parseFloat(formatted) }))
+    }
   }
 
   // Nova função para gerar parcelas automaticamente

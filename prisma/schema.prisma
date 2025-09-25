@@ -236,11 +236,11 @@ model Cobranca {
   metadata            Json?    @default("{}")
 
   //Relacionamentos
-  cliente_id          String
+  cliente_id          String?
   cliente_eventual_id String?
 
-  cliente          Cliente          @relation(fields: [cliente_id], references: [id])
-  cliente_eventual ClienteEventual? @relation(fields: [cliente_eventual_id], references: [id])
+  cliente          Cliente?          @relation(fields: [cliente_id], references: [id])
+  cliente_eventual ClienteEventual?  @relation(fields: [cliente_eventual_id], references: [id])
   itens            ItemCobranca[]
   balancos         Balanco[]
 
@@ -280,9 +280,10 @@ model ClienteEventual {
   parcelamento   String // "AVISTA", "PARCELADO", "ENTRADA_PARCELAS"
   observacoes    String?
 
-  valor_entrada      Int?
+  valor_entrada       Int?
   quantidade_parcelas Int?
-  parcelas_config    Json? // Armazenar configuração das parcelas
+  valor_parcelas      Int? // Novo campo adicionado
+  parcelas_config     Json? // Armazenar configuração das parcelas
 
   ativo               Boolean   @default(true)
   data_de_criacao     DateTime  @default(now())

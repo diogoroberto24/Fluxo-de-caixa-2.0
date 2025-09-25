@@ -26,7 +26,7 @@ interface EventualClient {
   valor_entrada?: number
   quantidade_parcelas?: number
   valor_parcelas?: number // Novo campo adicionado
-  parcelas_config?: string
+  parcelas_config?: string | any[] // Pode ser string JSON ou array de objetos
 }
 
 interface EventualClientsManagementProps {
@@ -163,12 +163,32 @@ export function EventualClientsManagement({ onNavigate }: EventualClientsManagem
     }
   }
 
+  // Função utilitária para fazer parse seguro de parcelas_config
+  const parseParcelasConfig = (parcelasConfig: any): any[] => {
+    if (!parcelasConfig) return []
+    
+    if (typeof parcelasConfig === 'string') {
+      try {
+        return JSON.parse(parcelasConfig)
+      } catch (error) {
+        console.error('Erro ao fazer parse de parcelas_config:', error)
+        return []
+      }
+    }
+    
+    if (Array.isArray(parcelasConfig)) {
+      return parcelasConfig
+    }
+    
+    return []
+  }
+
   const getParcelamentoDisplay = (client: EventualClient) => {
     switch (client.parcelamento) {
       case "AVISTA":
         return <Badge variant="default">À Vista</Badge>
       case "PARCELADO":
-        const parcelas = client.parcelas_config ? JSON.parse(client.parcelas_config) : []
+        const parcelas = parseParcelasConfig(client.parcelas_config)
         return (
           <div className="flex flex-col gap-1">
             <Badge variant="secondary">Parcelado</Badge>
@@ -178,7 +198,7 @@ export function EventualClientsManagement({ onNavigate }: EventualClientsManagem
           </div>
         )
       case "ENTRADA_PARCELAS":
-        const parcelasEntrada = client.parcelas_config ? JSON.parse(client.parcelas_config) : []
+        const parcelasEntrada = parseParcelasConfig(client.parcelas_config)
         return (
           <div className="flex flex-col gap-1">
             <Badge variant="outline">Entrada + Parcelas</Badge>
@@ -191,7 +211,7 @@ export function EventualClientsManagement({ onNavigate }: EventualClientsManagem
           </div>
         )
       default:
-        return <Badge variant="secondary">Não definido</Badge>
+        return <Badge variant="outline">Não definido</Badge>
     }
   }
 

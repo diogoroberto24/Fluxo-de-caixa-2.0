@@ -128,7 +128,7 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
         socio_pais: clientData.socio_pais || "Brasil",
         tributacao: clientData.tributacao || "",
         modulos: mappedModules,
-        honorarios: clientData.honorarios?.toString() || "",
+        honorarios: clientData.honorarios ? (clientData.honorarios / 100).toFixed(2) : "",
         observacao: clientData.observacao || "",
         status: clientData.status || "Ativo",
         ativo: clientData.ativo !== undefined ? clientData.ativo : true
@@ -252,7 +252,7 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
           nome: produto.nome,
           descricao: produto.descricao || `Módulo ${moduloNome}`,
           quantidade: 1,
-          valor: parseInt(formData.honorarios) || 0,
+          valor: Math.round(parseFloat(formData.honorarios) * 100) || 0, // Adiciona o valor do módulo
           status: "Ativo",
           ativo: true
         };
@@ -261,8 +261,8 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData }:
       // Aguardar a criação de todos os produtos
       const produtosFormatados = await Promise.all(produtosPromises);
 
-      // Converter honorarios para número
-      const honorariosValue = parseInt(formData.honorarios) || 0
+      // Converter honorarios para centavos
+      const honorariosValue = Math.round(parseFloat(formData.honorarios) * 100) || 0
       
       // Se estiver em modo de edição e os honorários foram alterados, registra no histórico
       if (isEditMode && clientData && clientData.honorarios !== honorariosValue){

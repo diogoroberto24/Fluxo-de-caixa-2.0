@@ -280,8 +280,8 @@ export function ClientsManagement({ onNavigate }: ClientsManagementProps) {
             // Extrair os módulos dos produtos do cliente
             const modules = client.produtos?.map((p: any) => p.nome) || []
             
-            // Calcular o valor total dos honorários
-            const fees = client.honorarios || 0
+            // Calcular o valor total dos honorários (converter de centavos para reais)
+            const fees = client.honorarios ? client.honorarios / 100 : 0
             
             // Determinar o status baseado no campo 'ativo'
             const status = client.ativo ? "active" : "inactive"
@@ -441,8 +441,8 @@ export function ClientsManagement({ onNavigate }: ClientsManagementProps) {
         // Converte o formato da API para o formato usado no componente
         const formattedHistory = data.map((item: any) => ({
           date: item.data,
-          previousFee: item.valor_anterior,
-          newFee: item.valor_novo,
+          previousFee: item.valor_anterior / 100, // Converter de centavos para reais
+          newFee: item.valor_novo / 100, // Converter de centavos para reais
           reason: item.motivo,
           changedBy: item.alterado_por,
         }));

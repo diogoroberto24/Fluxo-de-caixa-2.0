@@ -20,7 +20,10 @@ export async function PUT(
         email: data.email,
         valor_servico: data.valor_servico,
         parcelamento: data.parcelamento,
-        observacoes: data.observacoes || null
+        observacoes: data.observacoes || null,
+        valor_entrada: data.valor_entrada || null,
+        quantidade_parcelas: data.quantidade_parcelas || null,
+        valor_parcelas: data.valor_parcelas || null // Novo campo
       }
     })
 
