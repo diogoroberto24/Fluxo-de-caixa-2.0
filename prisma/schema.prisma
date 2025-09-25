@@ -236,11 +236,13 @@ model Cobranca {
   metadata            Json?    @default("{}")
 
   //Relacionamentos
-  cliente_id String
+  cliente_id          String
+  cliente_eventual_id String?
 
-  cliente  Cliente        @relation(fields: [cliente_id], references: [id])
-  itens    ItemCobranca[]
-  balancos Balanco[]
+  cliente          Cliente          @relation(fields: [cliente_id], references: [id])
+  cliente_eventual ClienteEventual? @relation(fields: [cliente_eventual_id], references: [id])
+  itens            ItemCobranca[]
+  balancos         Balanco[]
 
   @@map("cobrancas")
 }
@@ -266,4 +268,30 @@ model ItemCobranca {
   produto  Produto   @relation(fields: [produto_id], references: [id])
 
   @@map("cobranca_itens")
+}
+
+model ClienteEventual {
+  id             String @id @default(cuid())
+  nome           String
+  documento      String
+  telefone       String
+  email          String
+  valor_servico  Int    
+  parcelamento   String // "AVISTA", "PARCELADO", "ENTRADA_PARCELAS"
+  observacoes    String?
+
+  valor_entrada      Int?
+  quantidade_parcelas Int?
+  parcelas_config    Json? // Armazenar configuração das parcelas
+
+  ativo               Boolean   @default(true)
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?     @default("{}")
+
+  // Relacionamentos com contas a receber
+  cobrancas Cobranca[]
+
+  @@map("clientes_eventuais")
 }

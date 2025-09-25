@@ -3,7 +3,9 @@
 import { useState } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { Dashboard } from "@/components/dashboard"
+import { ClientsHub } from "@/components/clients-hub"
 import { ClientsManagement } from "@/components/clients-management"
+import { EventualClientsManagement } from "@/components/eventual-clients-management"
 import { ReceivablesManagement } from "@/components/receivables-management"
 import { PayablesManagement } from "@/components/payables-management"
 import { ReportsContracts } from "@/components/reports-contracts"
@@ -16,7 +18,11 @@ export default function HomePage() {
       case "dashboard":
         return <Dashboard />
       case "clients":
-        return <ClientsManagement />
+        return <ClientsHub onNavigate={setActiveTab} />
+      case "clients-fixed":
+        return <ClientsManagement onNavigate={setActiveTab} />
+      case "clients-eventual":
+        return <EventualClientsManagement onNavigate={setActiveTab} />
       case "receivables":
         return <ReceivablesManagement />
       case "payables":

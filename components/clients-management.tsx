@@ -1,17 +1,21 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Plus, Search, Eye, Edit, DollarSign, UserX, Users, Calendar, Phone, Building, CreditCard, UserCheck } from "lucide-react"
-import { ClientModal } from "@/components/client-modal"
-import { PaymentModal } from "@/components/payment-modal"
+import { Plus, Search, Eye, Edit, Trash2, Users, ArrowLeft, DollarSign, UserX, UserCheck, Building, Phone, Calendar, CreditCard } from "lucide-react"
+import { ClientModal } from "./client-modal"
+import { PaymentModal } from "./payment-modal"
+
+interface ClientsManagementProps {
+  onNavigate?: (tab: string) => void
+}
 
 interface Client {
   id: string
@@ -25,7 +29,7 @@ interface Client {
   email: string
   inactivationReason?: string
   tributacao?: string
-  
+  originalData?: any
 }
 
 interface FeeHistory {
@@ -243,12 +247,12 @@ const getTributacaoDisplay = (tributacaoValue?: string) => {
   }
 };
 
-export function ClientsManagement() {
+export function ClientsManagement({ onNavigate }: ClientsManagementProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [isClientModalOpen, setIsClientModalOpen] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<any>(null)
-  const [clients, setClients] = useState<Client[]>(mockClients)
+  const [clients, setClients] = useState<Client[]>([])
   const [isInactivateModalOpen, setIsInactivateModalOpen] = useState(false)
   const [clientToInactivate, setClientToInactivate] = useState<string | null>(null)
   const [inactivationReason, setInactivationReason] = useState("")
@@ -279,33 +283,27 @@ export function ClientsManagement() {
             // Calcular o valor total dos honorários
             const fees = client.honorarios || 0
             
-            // Determinar o status com base no campo status do cliente
-            let status: "active" | "overdue" | "inactive" = "active"
-            if (client.status === "Inativo" || !client.ativo) {
-              status = "inactive"
-            } else if (client.status === "Inadimplente") {
-              status = "overdue"
-            }
+            // Determinar o status baseado no campo 'ativo'
+            const status = client.ativo ? "active" : "inactive"
             
             return {
               id: client.id,
-              name: client.nome,
-              cnpj: client.documento,
+              name: client.nome || client.razao_social,
+              cnpj: client.cnpj || client.cpf,
               modules: modules,
               fees: fees,
               status: status,
-              lastPayment: client.data_de_atualizacao ? new Date(client.data_de_atualizacao).toISOString().split('T')[0] : "",
-              phone: client.telefone,
-              email: client.email,
-              inactivationReason: client.observacao,
-              // Dados adicionais para edição
-              originalData: client,
-              tributacao: client.tributacao,
+              lastPayment: client.ultimo_pagamento || "N/A",
+              phone: client.telefone || "N/A",
+              email: client.email || "N/A",
+              inactivationReason: client.observacao || "",
+              tributacao: client.tributacao || "",
+              originalData: client // Manter os dados originais para edição
             }
           })
           
-          // Adicionar os clientes do banco aos mockados
           setDbClients(formattedClients)
+          setClients(formattedClients)
         }
       } catch (error) {
         console.error("Erro ao buscar clientes:", error)
@@ -315,10 +313,10 @@ export function ClientsManagement() {
     fetchClients()
   }, [isClientModalOpen]) // Recarregar quando o modal de cliente for fechado
 
-  // Combinar clientes mockados com clientes do banco
-  useEffect(() => {
-    setClients([...mockClients, ...dbClients])
-  }, [dbClients])
+  // Remover o useEffect que combinava dados mockados com dados do banco
+  // useEffect(() => {
+  //   setClients([...mockClients, ...dbClients])
+  // }, [dbClients])
 
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
@@ -421,7 +419,8 @@ export function ClientsManagement() {
       return feeHistory[clientId];
     }
 
-    return mockFeeHistory[clientId] || [
+    // Retornar histórico padrão apenas com dados do cliente atual
+    return [
       {
         date: new Date().toISOString().split("T")[0],
         previousFee: 0,
@@ -540,9 +539,22 @@ export function ClientsManagement() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Gestão de Clientes</h1>
-          <p className="text-muted-foreground mt-1">Gerencie seus clientes e acompanhe seus contratos</p>
+        <div className="flex items-center space-x-4">
+          {onNavigate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onNavigate("clients")}
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Voltar</span>
+            </Button>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Gestão de Clientes Fixos</h1>
+            <p className="text-muted-foreground mt-1">Gerencie clientes com contratos recorrentes</p>
+          </div>
         </div>
         <div className="flex gap-3">
           <Button
@@ -597,9 +609,9 @@ export function ClientsManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredClients.map((client) => (
+              {filteredClients.map((client, index) => (
                 <TableRow key={client.id}>
-                  <TableCell className="font-medium">{client.id}</TableCell>
+                  <TableCell className="font-medium">{String(index + 1).padStart(2, '0')}</TableCell>
                   <TableCell>{client.name}</TableCell>
                   <TableCell>{client.cnpj}</TableCell>
                   <TableCell>
