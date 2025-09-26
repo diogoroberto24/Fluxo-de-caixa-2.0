@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../lib/generated/prisma"
@@ -31,17 +28,19 @@ model Usuario {
 
   @@map("usuarios")
 }
-model HistoricoHonorario{
+
+model HistoricoHonorario {
   id              String  @id @default(uuid())
   cliente_id      String
   data            DateTime @default(now())
-  valor_anterior  Int
-  valor_novo      Int
+  valor_anterior  Int     // em centavos
+  valor_novo      Int     // em centavos
   motivo          String
   alterado_por    String  @default("Sistema")
 
   data_de_criacao     DateTime  @default(now())
   data_de_atualizacao DateTime  @updatedAt
+  metadata            Json?     @default("{}")
 
   cliente Cliente @relation(fields: [cliente_id], references: [id])
 
@@ -72,7 +71,7 @@ model Cliente {
   socio_pais      String?
 
   tributacao String
-  honorarios Int      @default(0) // Campo adicionado para armazenar o valor dos honorários
+  honorarios Int      @default(0) // em centavos
   observacao String?
 
   status              String
@@ -112,9 +111,9 @@ model Produto {
   id        String  @id @default(uuid())
   nome      String
   descricao String?
-  valor     Int
-  tipo      String // servico | entrada
-  direcao   String // entrada | saida
+  valor     Int     // em centavos
+  tipo      String  // servico | produto
+  direcao   String  // entrada | saida
 
   ativo               Boolean   @default(true)
   data_de_criacao     DateTime  @default(now())
@@ -128,7 +127,7 @@ model Produto {
   categoria   Categoria        @relation(fields: [categoria_id], references: [id])
   clientes    ClienteProduto[]
   cobrancas   ItemCobranca[]
-  Recorrencia Recorrencia[]
+  recorrencias Recorrencia[]
 
   @@map("produtos")
 }
@@ -138,7 +137,7 @@ model ClienteProduto {
   quantidade Int
   nome       String
   descricao  String?
-  valor      Int
+  valor      Int     // em centavos
 
   status              String
   ativo               Boolean   @default(true)
@@ -164,7 +163,7 @@ enum BalancoTipo {
 model Balanco {
   id        String      @id @default(uuid())
   tipo      BalancoTipo
-  valor     Int
+  valor     Int         // em centavos
   descricao String?
 
   status              String
@@ -218,10 +217,10 @@ model Recorrencia {
 model Cobranca {
   id String @id @default(uuid())
 
-  subtotal Int
-  desconto Int
-  total    Int
-  status   String // "pendente", "pago", "cancelado"
+  subtotal Int     // em centavos
+  desconto Int     // em centavos
+  total    Int     // em centavos
+  status   String  // "pendente", "pago", "cancelado"
 
   data_de_vencimento     String
   data_de_pagamento      DateTime?
@@ -250,10 +249,10 @@ model Cobranca {
 model ItemCobranca {
   id              String  @id @default(uuid())
   quantidade      Int     @default(1)
-  valor_unitario  Int
-  subtotal        Int
-  desconto        Int
-  total           Int
+  valor_unitario  Int     // em centavos
+  subtotal        Int     // em centavos
+  desconto        Int     // em centavos
+  total           Int     // em centavos
   descricao       String?
 
   data_de_criacao     DateTime @default(now())
@@ -276,13 +275,13 @@ model ClienteEventual {
   documento      String
   telefone       String
   email          String
-  valor_servico  Int    
+  valor_servico  Int    // em centavos
   parcelamento   String // "AVISTA", "PARCELADO", "ENTRADA_PARCELAS"
   observacoes    String?
 
-  valor_entrada       Int?
+  valor_entrada       Int?  // em centavos
   quantidade_parcelas Int?
-  valor_parcelas      Int? // Novo campo adicionado
+  valor_parcelas      Int?  // em centavos
   parcelas_config     Json? // Armazenar configuração das parcelas
 
   ativo               Boolean   @default(true)

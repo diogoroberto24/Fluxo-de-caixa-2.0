@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { CriarClienteUseCase } from '@/server/use-cases/clientes/criar-cliente'
-import { ListarClientesUseCase } from '@/server/use-cases/clientes/listar-clientes'
+import { BuscarClienteUseCase } from '@/server/use-cases/clientes/buscar-cliente'
+import { AtualizarClienteUseCase } from '@/server/use-cases/clientes/atualizar-cliente'
 import { RepositoryFactory } from '@/server/infra/repos/factory'
 import { AppError, ValidationError } from '@/shared/errors'
 
-export async function POST(request: NextRequest) {
+interface RouteParams {
+  params: {
+    id: string
+  }
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const body = await request.json()
-    
-    const useCase = new CriarClienteUseCase(RepositoryFactory.clienteRepository)
-    const result = await useCase.execute(body)
+    const useCase = new BuscarClienteUseCase(RepositoryFactory.clienteRepository)
+    const result = await useCase.execute({ id: params.id })
 
     if (result instanceof AppError) {
       return NextResponse.json(
@@ -22,15 +26,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: result
-      },
-      { status: 201 }
-    )
+    return NextResponse.json({
+      success: true,
+      data: result
+    })
   } catch (error) {
-    console.error('Erro ao criar cliente:', error)
+    console.error('Erro ao buscar cliente:', error)
     
     if (error instanceof ValidationError) {
       return NextResponse.json(
@@ -54,23 +55,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const { searchParams } = new URL(request.url)
+    const body = await request.json()
     
-    const filters = {
-      page: searchParams.get('page') ? Number(searchParams.get('page')) : undefined,
-      limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined,
-      search: searchParams.get('search') || undefined,
-      status: searchParams.get('status') || undefined,
-      tributacao: searchParams.get('tributacao') || undefined,
-      ativo: searchParams.get('ativo') ? searchParams.get('ativo') === 'true' : undefined,
-      orderBy: searchParams.get('orderBy') || undefined,
-      order: (searchParams.get('order') as 'asc' | 'desc') || undefined
-    }
-
-    const useCase = new ListarClientesUseCase(RepositoryFactory.clienteRepository)
-    const result = await useCase.execute(filters)
+    const useCase = new AtualizarClienteUseCase(RepositoryFactory.clienteRepository)
+    const result = await useCase.execute({ id: params.id, ...body })
 
     if (result instanceof AppError) {
       return NextResponse.json(
@@ -85,10 +75,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      ...result
+      data: result
     })
   } catch (error) {
-    console.error('Erro ao listar clientes:', error)
+    console.error('Erro ao atualizar cliente:', error)
     
     if (error instanceof ValidationError) {
       return NextResponse.json(

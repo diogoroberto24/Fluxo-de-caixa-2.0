@@ -1,40 +1,48 @@
-import { z } from "zod";
+import { z } from 'zod'
 
-export const envSchema = z.object({
-  // node
-  NODE_ENV: z.string().optional().default("development"),
+const envSchema = z.object({
+  // Database
+  DATABASE_URL: z.string().url('DATABASE_URL deve ser uma URL válida'),
+  
+  // Next.js
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  
+  // Server
+  PORT: z.coerce.number().default(3000),
+  
+  // JWT
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET deve ter pelo menos 32 caracteres'),
+  JWT_EXPIRES_IN: z.string().default('7d'),
+  
+  // Email (opcional por enquanto)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  
+  // Payment providers (opcional por enquanto)
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  
+  // Redis (para filas)
+  REDIS_URL: z.string().optional(),
+  
+  // Logs
+  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+})
 
-  // database
-  DATABASE_URL: z.string(),
-  DATABASE_HOST: z.string().optional(),
-  DATABASE_PORT: z.string().optional(),
-  DATABASE_USER: z.string().optional(),
-  DATABASE_PASS: z.string().optional(),
-  DATABASE_NAME: z.string().optional(),
+function validateEnv() {
+  try {
+    return envSchema.parse(process.env)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const missingVars = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join('\n')
+      throw new Error(`Variáveis de ambiente inválidas:\n${missingVars}`)
+    }
+    throw error
+  }
+}
 
-  // auth
-  JWT_ACCESS_PRIVATE_KEY: z.string(),
-  JWT_ACCESS_PUBLIC_KEY: z.string(),
-  JWT_ACCESS_EXPIRES_IN_HOURS: z.coerce.number().optional().default(1),
-  JWT_REFRESH_PRIVATE_KEY: z.string(),
-  JWT_REFRESH_PUBLIC_KEY: z.string(),
-  JWT_REFRESH_EXPIRES_IN_HOURS: z.coerce.number().optional().default(336),
+export const env = validateEnv()
 
-  // redis
-  REDIS_HOST: z.string().optional().default("127.0.0.1"),
-  REDIS_PORT: z.coerce.number().optional().default(6379),
-  REDIS_DB: z.coerce.number().optional().default(0),
-  REDIS_PASSWORD: z.string().optional(),
-
-  // mail
-  MAIL_HOST: z.string(),
-  MAIL_PORT: z.coerce.number(),
-  MAIL_USER: z.string(),
-  MAIL_PASS: z.string(),
-  MAIL_FROM: z.string(),
-  MAIL_TLS: z.coerce.boolean().optional().default(true),
-  MAIL_SECURE: z.coerce.boolean().optional().default(false),
-  MAIL_PREVIEW: z.coerce.boolean().optional().default(false),
-});
-
-export type Env = z.infer<typeof envSchema>;
+export type Env = z.infer<typeof envSchema>

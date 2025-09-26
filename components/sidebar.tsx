@@ -2,8 +2,8 @@
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, TrendingUp, CreditCard, FileText, Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
+import { LayoutDashboard, Users, TrendingUp, CreditCard, FileText } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface SidebarProps {
   activeTab: string
@@ -19,8 +19,6 @@ const menuItems = [
 ]
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
-  const { theme, setTheme } = useTheme()
-
   return (
     <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       {/* Header */}
@@ -54,15 +52,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
       {/* Theme Toggle */}
       <div className="p-4 border-t border-sidebar-border">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        >
-          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
-        </Button>
+        <ThemeToggle />
       </div>
     </div>
   )

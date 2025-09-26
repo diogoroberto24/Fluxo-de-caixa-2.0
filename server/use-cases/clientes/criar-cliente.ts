@@ -1,45 +1,41 @@
-import { Cliente } from "@/shared/types";
-import {
-  ClienteRepository,
-  type IClienteRepository,
-  type CreateClienteInput,
-} from "@/server/infra/repos";
-import { createClienteSchema } from "@/shared/validation/clientes";
-import { ConflictError, ValidationError } from "@/shared/errors";
-import { UseCase } from "../use-case";
+import { UseCase } from '../use-case'
+import { criarClienteSchema, type CreateClienteInput } from '@/shared/validation/clientes'
+import type { Cliente } from '@/shared/types'
+import { ConflictError, NotFoundError } from '@/shared/errors'
+import type { ClienteRepository } from '@/server/infra/repos/interfaces'
 
-export type CriarClienteRequest = CreateClienteInput;
-export type CriarClienteResult = Cliente;
-export type CriarClienteError = ConflictError | ValidationError;
+interface CriarClienteRequest extends CreateClienteInput {}
+
+interface CriarClienteResult {
+  cliente: Cliente
+}
+
+type CriarClienteErrors = ConflictError | NotFoundError
 
 export class CriarClienteUseCase extends UseCase<
   CriarClienteRequest,
   CriarClienteResult,
-  CriarClienteError
+  CriarClienteErrors
 > {
-  protected schema = createClienteSchema;
+  protected schema = criarClienteSchema
 
-  constructor(
-    private readonly clienteRepository: IClienteRepository = new ClienteRepository()
-  ) {
-    super();
+  constructor(private clienteRepository: ClienteRepository) {
+    super()
   }
 
-  protected async handle(
-    input: CriarClienteRequest
-  ): Promise<CriarClienteResult> {
-    const existingCliente = await this.clienteRepository.findByDocumento(
-      input.documento
-    );
-
-    if (existingCliente) {
-      throw new ConflictError(
-        `Cliente com documento ${input.documento} já existe`
-      );
+  protected async handle(data: CriarClienteRequest): Promise<CriarClienteResult> {
+    // Verificar se já existe cliente com o mesmo documento
+    const clienteExistente = await this.clienteRepository.exists(data.documento)
+    
+    if (clienteExistente) {
+      throw new ConflictError('Já existe um cliente com este documento')
     }
 
-    const cliente = await this.clienteRepository.create(input);
+    // Criar o cliente
+    const cliente = await this.clienteRepository.create(data)
 
-    return cliente;
+    return {
+      cliente
+    }
   }
 }

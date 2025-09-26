@@ -19,7 +19,7 @@ export const balancoBaseSchema = z.object({
     .number()
     .positive("Valor deve ser positivo")
     .multipleOf(0.01, "Valor deve ter no máximo 2 casas decimais")
-    .transform((value) => new Money({ value })),
+    .transform((value) => Money.fromReais(value)),
 
   descricao: z
     .string()
@@ -78,7 +78,7 @@ export const reconciliarBalancoSchema = z.object({
     .number()
     .positive("Valor deve ser positivo")
     .multipleOf(0.01)
-    .transform((value) => new Money({ value })),
+    .transform((value) => Money.fromReais(value)),
   observacoes: z.string().optional().nullable(),
 });
 
@@ -86,10 +86,10 @@ export const reconciliarBalancoSchema = z.object({
 export const calcularSaldo = (entradas: Money[], saidas: Money[]): Money => {
   const totalEntradas = entradas.reduce(
     (acc, val) => acc.add(val),
-    new Money()
+    Money.fromCentavos(0)
   );
-  const totalSaidas = saidas.reduce((acc, val) => acc.add(val), new Money());
-  return totalEntradas.sub(totalSaidas);
+  const totalSaidas = saidas.reduce((acc, val) => acc.add(val), Money.fromCentavos(0));
+  return totalEntradas.subtract(totalSaidas);
 };
 
 // Types inferidos
@@ -101,3 +101,31 @@ export type FluxoCaixaInput = z.infer<typeof fluxoCaixaSchema>;
 export type ReconciliarBalancoInput = z.infer<typeof reconciliarBalancoSchema>;
 export type TipoBalanco = z.infer<typeof TipoBalancoEnum>;
 export type StatusBalanco = z.infer<typeof StatusBalancoEnum>;
+
+export const criarBalancoSchema = z.object({
+  tipo: z.enum(["ENTRADA", "SAIDA"]),
+  valor: z.number().int().min(0),
+  descricao: z.string().optional(),
+  data_de_fato: z.string().datetime(),
+  cobranca_id: z.string().uuid().optional(),
+  recorrencia_id: z.string().uuid().optional(),
+});
+
+export const atualizarBalancoSchema = criarBalancoSchema.partial().extend({
+  id: z.string().uuid(),
+});
+
+export const listarBalancosSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(10),
+  tipo: z.enum(["ENTRADA", "SAIDA"]).optional(),
+  data_inicio: z.string().datetime().optional(),
+  data_fim: z.string().datetime().optional(),
+});
+
+export type CriarBalancoRequest = z.infer<typeof criarBalancoSchema>;
+export type AtualizarBalancoRequest = z.infer<typeof atualizarBalancoSchema>;
+export type ListarBalancosRequest = z.infer<typeof listarBalancosSchema>;
+
+// Alias para compatibilidade com a interface do repositório
+export type BalancoFilters = ListarBalancosRequest;

@@ -1,1 +1,5 @@
-export * from "./cliente-repo";
+export * from './cliente-repository'
+export * from './produto-repository'
+export * from './cobranca-repository'
+export * from './categoria-repository'
+export * from './balanco-repository'

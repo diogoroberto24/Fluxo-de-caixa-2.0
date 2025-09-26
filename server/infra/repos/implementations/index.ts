@@ -1,1 +1,5 @@
-export * from "./cliente-repo";
+export * from './prisma-cliente-repository'
+export * from './prisma-produto-repository'
+export * from './prisma-cobranca-repository'
+export * from './prisma-categoria-repository'
+export * from './prisma-balanco-repository'
