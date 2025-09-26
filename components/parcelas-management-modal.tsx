@@ -168,7 +168,7 @@ export function ParcelasManagementModal({ isOpen, onClose, client }: ParcelasMan
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
+        <DialogContent className="!max-w-[60vw] !w-[60vw] h-[70vh] flex flex-col">
           <DialogHeader className="flex-shrink-0 pb-2">
             <DialogTitle className="flex items-center gap-2 text-xl">
               <CreditCard className="w-5 h-5" />
@@ -216,7 +216,7 @@ export function ParcelasManagementModal({ isOpen, onClose, client }: ParcelasMan
             </div>
 
             {/* Lista de Parcelas - Tabela Otimizada */}
-            <div className="flex-1 min-h-0 bg-background rounded-lg border">
+            <div className="flex-1 min-h-0 bg-background rounded-lg border overflow-hidden">
               <div className="p-4 border-b">
                 <h3 className="text-lg font-semibold">Parcelas</h3>
                 <p className="text-sm text-muted-foreground">
@@ -224,7 +224,7 @@ export function ParcelasManagementModal({ isOpen, onClose, client }: ParcelasMan
                 </p>
               </div>
               
-              <div className="flex-1 overflow-auto">
+              <div className="overflow-x-auto">
                 {loading ? (
                   <div className="flex items-center justify-center h-32">
                     <div className="text-center">
@@ -240,54 +240,54 @@ export function ParcelasManagementModal({ isOpen, onClose, client }: ParcelasMan
                     </div>
                   </div>
                 ) : (
-                  <Table>
+                  <Table className="min-w-full">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-20">Parcela</TableHead>
-                        <TableHead className="w-24">Valor</TableHead>
-                        <TableHead className="w-28">Vencimento</TableHead>
-                        <TableHead className="w-20">Status</TableHead>
-                        <TableHead className="w-28">Pagamento</TableHead>
-                        <TableHead className="w-24">Método</TableHead>
-                        <TableHead className="w-32">Ações</TableHead>
+                        <TableHead className="min-w-[80px] whitespace-nowrap">Parcela</TableHead>
+                        <TableHead className="min-w-[80px] whitespace-nowrap">Valor</TableHead>
+                        <TableHead className="min-w-[80px] whitespace-nowrap">Vencimento</TableHead>
+                        <TableHead className="min-w-[80px] whitespace-nowrap">Status</TableHead>
+                        <TableHead className="min-w-[80px] whitespace-nowrap">Pagamento</TableHead>
+                        <TableHead className="min-w-[80px] whitespace-nowrap">Método</TableHead>
+                        <TableHead className="min-w-[80px] whitespace-nowrap">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {parcelas.map((parcela, index) => (
                         <TableRow key={parcela.id} className="hover:bg-muted/50">
-                          <TableCell className="font-medium text-sm">
-                            {index + 1}ª
+                          <TableCell className="font-medium text-sm whitespace-nowrap">
+                            {index + 1}ª Parcela
                           </TableCell>
-                          <TableCell className="text-sm font-medium">
+                          <TableCell className="text-sm font-medium whitespace-nowrap">
                             {formatCurrency(parcela.total)}
                           </TableCell>
-                          <TableCell className="text-sm">
+                          <TableCell className="text-sm whitespace-nowrap">
                             <div className="flex items-center gap-1">
                               <Calendar className="w-3 h-3 text-muted-foreground" />
                               {formatDate(parcela.data_de_vencimento)}
                             </div>
                           </TableCell>
-                          <TableCell>{getStatusBadge(parcela.status)}</TableCell>
-                          <TableCell className="text-sm">
+                          <TableCell className="whitespace-nowrap">{getStatusBadge(parcela.status)}</TableCell>
+                          <TableCell className="text-sm whitespace-nowrap">
                             {parcela.data_de_pagamento ? 
                               formatDate(parcela.data_de_pagamento) : 
                               <span className="text-muted-foreground">-</span>
                             }
                           </TableCell>
-                          <TableCell className="text-sm">
+                          <TableCell className="text-sm whitespace-nowrap">
                             {parcela.metodo_de_pagamento || <span className="text-muted-foreground">-</span>}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="whitespace-nowrap">
                             {parcela.status === 'pendente' && (
                               <Button
                                 size="sm"
-                                className="h-8 text-xs"
+                                className="h-8 text-xs px-3"
                                 onClick={() => {
                                   setSelectedParcela(parcela)
                                   setIsPaymentModalOpen(true)
                                 }}
                               >
-                                Confirmar
+                                Confirmar Pagamento
                               </Button>
                             )}
                           </TableCell>

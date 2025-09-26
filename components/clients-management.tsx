@@ -286,14 +286,18 @@ export function ClientsManagement({ onNavigate }: ClientsManagementProps) {
             // Determinar o status baseado no campo 'ativo'
             const status = client.ativo ? "active" : "inactive"
             
+            // Buscar a data da última cobrança paga
+            const lastPaidCobranca = client.cobrancas?.find((c: any) => c.status === 'pago')
+            const lastPaymentDate = lastPaidCobranca?.data_de_pagamento || client.data_de_criacao
+            
             return {
               id: client.id,
-              name: client.nome || client.razao_social,
-              cnpj: client.cnpj || client.cpf,
+              name: client.nome,
+              cnpj: client.documento, // Corrigido: usar o campo documento
               modules: modules,
               fees: fees,
               status: status,
-              lastPayment: client.ultimo_pagamento || "N/A",
+              lastPayment: lastPaymentDate, // Corrigido: usar data real
               phone: client.telefone || "N/A",
               email: client.email || "N/A",
               inactivationReason: client.observacao || "",

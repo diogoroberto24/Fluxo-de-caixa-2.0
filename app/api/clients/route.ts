@@ -187,6 +187,15 @@ export async function GET() {
             produto: true,
           },
         },
+        cobrancas: {
+          where: {
+            status: 'pago'
+          },
+          orderBy: {
+            data_de_pagamento: 'desc'
+          },
+          take: 1
+        },
       },
     });
 
