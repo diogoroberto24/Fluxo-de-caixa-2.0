@@ -58,15 +58,34 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     
-    const filters = {
-      page: searchParams.get('page') ? Number(searchParams.get('page')) : undefined,
-      limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined,
-      search: searchParams.get('search') || undefined,
-      status: searchParams.get('status') || undefined,
-      tributacao: searchParams.get('tributacao') || undefined,
-      ativo: searchParams.get('ativo') ? searchParams.get('ativo') === 'true' : undefined,
-      orderBy: searchParams.get('orderBy') || undefined,
-      order: (searchParams.get('order') as 'asc' | 'desc') || undefined
+    // Construir filters apenas com propriedades que têm valores
+    const filters: any = {}
+    
+    // Adicionar apenas os parâmetros que estão presentes
+    const pageParam = searchParams.get('page')
+    if (pageParam) filters.page = Number(pageParam)
+    
+    const limitParam = searchParams.get('limit')
+    if (limitParam) filters.limit = Number(limitParam)
+    
+    const searchParam = searchParams.get('search')
+    if (searchParam) filters.search = searchParam
+    
+    const statusParam = searchParams.get('status')
+    if (statusParam) filters.status = statusParam
+    
+    const tributacaoParam = searchParams.get('tributacao')
+    if (tributacaoParam) filters.tributacao = tributacaoParam
+    
+    const ativoParam = searchParams.get('ativo')
+    if (ativoParam) filters.ativo = ativoParam === 'true'
+    
+    const orderByParam = searchParams.get('orderBy')
+    if (orderByParam) filters.orderBy = orderByParam
+    
+    const orderParam = searchParams.get('order')
+    if (orderParam && (orderParam === 'asc' || orderParam === 'desc')) {
+      filters.order = orderParam
     }
 
     const useCase = new ListarClientesUseCase(RepositoryFactory.clienteRepository)
