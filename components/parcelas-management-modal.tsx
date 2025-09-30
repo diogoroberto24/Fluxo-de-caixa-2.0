@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -41,18 +41,18 @@ interface ParcelasManagementModalProps {
 }
 
 export function ParcelasManagementModal({ isOpen, onClose, client }: ParcelasManagementModalProps) {
-  const { toast } = useToast()
   const [parcelas, setParcelas] = useState<Parcela[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedParcela, setSelectedParcela] = useState<Parcela | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [selectedParcela, setSelectedParcela] = useState<Parcela | null>(null)
   const [paymentData, setPaymentData] = useState({
     data_de_pagamento: new Date().toISOString().split('T')[0],
     metodo_de_pagamento: "",
     observacoes: ""
   })
 
-  // Buscar parcelas do cliente
+  const { toast } = useToast()
+
   useEffect(() => {
     if (isOpen && client) {
       fetchParcelas()
@@ -61,37 +61,41 @@ export function ParcelasManagementModal({ isOpen, onClose, client }: ParcelasMan
 
   const fetchParcelas = async () => {
     if (!client) return
-    
-    setLoading(true)
+
+    setIsLoading(true)
     try {
-      const response = await fetch(`/api/cobrancas?cliente_eventual_id=${client.id}`)
-      if (response.ok) {
-        const cobrancas = await response.json()
-        setParcelas(cobrancas)
-      }
+      const response = await fetch(`/api/eventual-clients/${client.id}/parcelas`)
+      if (!response.ok) throw new Error('Falha ao buscar parcelas')
+      
+      const data = await response.json()
+      setParcelas(data)
     } catch (error) {
-      console.error("Erro ao buscar parcelas:", error)
       toast({
-        title: "Erro",
-        description: "Não foi possível carregar as parcelas",
+        title: "Erro ao carregar parcelas",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado",
         variant: "destructive"
       })
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  const handleConfirmPayment = async () => {
-    if (!selectedParcela) return
+  const handleConfirmPayment = (parcela: Parcela) => {
+    setSelectedParcela(parcela)
+    setIsPaymentModalOpen(true)
+  }
+
+  const handlePaymentSubmit = async () => {
+    if (!selectedParcela || !client) return
 
     try {
-      // 1. Atualizar a cobrança
+      // 1. Atualizar status da cobrança para 'pago'
       const cobrancaResponse = await fetch(`/api/cobrancas/${selectedParcela.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: 'pago',
-          data_de_pagamento: new Date(paymentData.data_de_pagamento),
+          data_de_pagamento: paymentData.data_de_pagamento,
           metodo_de_pagamento: paymentData.metodo_de_pagamento,
           observacoes: paymentData.observacoes
         })
@@ -99,41 +103,93 @@ export function ParcelasManagementModal({ isOpen, onClose, client }: ParcelasMan
 
       if (!cobrancaResponse.ok) throw new Error('Falha ao atualizar cobrança')
 
-      // 2. Criar lançamento no balanço
-      const balancoPayload = {
-        tipo: "ENTRADA",
-        valor: selectedParcela.total / 100, // Converter de centavos para reais
-        descricao: `Pagamento de parcela - ${client?.nome}`,
-        status: "confirmado",
-        data_de_fato: new Date(paymentData.data_de_pagamento),
-        cobranca_id: selectedParcela.id,
-        metadata: { categoria: 'Serviços', cliente_eventual: true }
+      // 2. Buscar o lançamento no balanço associado a esta cobrança
+      const balancoResponse = await fetch(`/api/balancos?cobranca_id=${selectedParcela.id}`)
+      if (!balancoResponse.ok) throw new Error('Falha ao buscar lançamento no balanço')
+      
+      const balancosData = await balancoResponse.json()
+      
+      // Buscar especificamente o registro com status 'previsto' para esta cobrança
+      const balancoExistente = balancosData.find((b: any) => 
+        b.cobranca_id === selectedParcela.id && 
+        b.status === 'previsto' &&
+        b.tipo === 'ENTRADA'
+      )
+
+      if (balancoExistente) {
+        // 3. Atualizar o lançamento existente no balanço de 'previsto' para 'confirmado'
+        const updateBalancoResponse = await fetch(`/api/balancos/${balancoExistente.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'confirmado',
+            data_de_fato: paymentData.data_de_pagamento,
+            descricao: `Pagamento de parcela confirmado - ${client?.nome}`,
+            metadata: { 
+              categoria: 'Serviços', 
+              cliente_eventual: true,
+              tipo_faturamento: 'confirmado',
+              data_confirmacao: new Date().toISOString()
+            }
+          })
+        })
+
+        if (!updateBalancoResponse.ok) {
+          const errorData = await updateBalancoResponse.json()
+          throw new Error(`Falha ao atualizar lançamento no balanço: ${errorData.message || 'Erro desconhecido'}`)
+        }
+
+        console.log('✅ Registro no balanço atualizado com sucesso:', balancoExistente.id)
+      } else {
+        // Se não encontrar o lançamento previsto, criar um novo (fallback)
+        console.warn('⚠️ Registro previsto não encontrado no balanço. Criando novo registro.')
+        
+        const balancoPayload = {
+          tipo: "ENTRADA",
+          valor: selectedParcela.total, // Valor já está em centavos
+          descricao: `Pagamento de parcela (fallback) - ${client?.nome}`,
+          status: "confirmado",
+          data_de_fato: paymentData.data_de_pagamento,
+          cobranca_id: selectedParcela.id,
+          metadata: { 
+            categoria: 'Serviços', 
+            cliente_eventual: true,
+            tipo_faturamento: 'fallback',
+            data_confirmacao: new Date().toISOString()
+          }
+        }
+
+        const createBalancoResponse = await fetch('/api/balancos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(balancoPayload)
+        })
+
+        if (!createBalancoResponse.ok) {
+          const errorData = await createBalancoResponse.json()
+          throw new Error(`Falha ao registrar no balanço: ${errorData.message || 'Erro desconhecido'}`)
+        }
+
+        console.log('✅ Novo registro criado no balanço (fallback)')
       }
-
-      const balancoResponse = await fetch('/api/balancos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(balancoPayload)
-      })
-
-      if (!balancoResponse.ok) throw new Error('Falha ao registrar no balanço')
 
       toast({
         title: "Pagamento confirmado!",
-        description: "A parcela foi marcada como paga e registrada no balanço.",
+        description: "A parcela foi marcada como paga e o balanço foi atualizado.",
+        variant: "default"
       })
 
-      // Atualizar a lista de parcelas
-      fetchParcelas()
+      // Fechar modal de pagamento e recarregar parcelas
       setIsPaymentModalOpen(false)
-      setSelectedParcela(null)
       setPaymentData({
-        data_de_pagamento: new Date().toISOString().split('T')[0],
+        data_de_pagamento: "",
         metodo_de_pagamento: "",
         observacoes: ""
       })
+      fetchParcelas()
 
     } catch (error) {
+      console.error('Erro ao confirmar pagamento:', error)
       toast({
         title: "Erro ao confirmar pagamento",
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado",
@@ -174,6 +230,9 @@ export function ParcelasManagementModal({ isOpen, onClose, client }: ParcelasMan
               <CreditCard className="w-5 h-5" />
               Gerenciar Parcelas - {client.nome}
             </DialogTitle>
+            <DialogDescription>
+              Visualize e gerencie as parcelas do cliente eventual, confirmando pagamentos e atualizando status.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 flex flex-col gap-4 min-h-0">
@@ -202,199 +261,155 @@ export function ParcelasManagementModal({ isOpen, onClose, client }: ParcelasMan
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-muted-foreground" />
+                  <User className="w-4 h-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Parcelamento</p>
-                    <p className="text-sm font-medium">
-                      {client.parcelamento === 'AVISTA' ? 'À Vista' : 
-                       client.parcelamento === 'PARCELADO' ? 'Parcelado' : 
-                       'Entrada + Parcelas'}
-                    </p>
+                    <p className="text-sm font-medium">{client.parcelamento === 'ENTRADA_PARCELAS' ? 'Entrada + Parcelas' : client.parcelamento}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Lista de Parcelas - Tabela Otimizada */}
-            <div className="flex-1 min-h-0 bg-background rounded-lg border overflow-hidden">
-              <div className="p-4 border-b">
-                <h3 className="text-lg font-semibold">Parcelas</h3>
-                <p className="text-sm text-muted-foreground">
-                  {parcelas.length} parcela(s) encontrada(s)
-                </p>
-              </div>
-              
-              <div className="overflow-x-auto">
-                {loading ? (
-                  <div className="flex items-center justify-center h-32">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                      <p className="text-sm text-muted-foreground">Carregando parcelas...</p>
-                    </div>
-                  </div>
-                ) : parcelas.length === 0 ? (
-                  <div className="flex items-center justify-center h-32">
-                    <div className="text-center">
-                      <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">Nenhuma parcela encontrada para este cliente.</p>
-                    </div>
-                  </div>
-                ) : (
-                  <Table className="min-w-full">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[80px] whitespace-nowrap">Parcela</TableHead>
-                        <TableHead className="min-w-[80px] whitespace-nowrap">Valor</TableHead>
-                        <TableHead className="min-w-[80px] whitespace-nowrap">Vencimento</TableHead>
-                        <TableHead className="min-w-[80px] whitespace-nowrap">Status</TableHead>
-                        <TableHead className="min-w-[80px] whitespace-nowrap">Pagamento</TableHead>
-                        <TableHead className="min-w-[80px] whitespace-nowrap">Método</TableHead>
-                        <TableHead className="min-w-[80px] whitespace-nowrap">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {parcelas.map((parcela, index) => (
-                        <TableRow key={parcela.id} className="hover:bg-muted/50">
-                          <TableCell className="font-medium text-sm whitespace-nowrap">
-                            {index + 1}ª Parcela
-                          </TableCell>
-                          <TableCell className="text-sm font-medium whitespace-nowrap">
-                            {formatCurrency(parcela.total)}
-                          </TableCell>
-                          <TableCell className="text-sm whitespace-nowrap">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3 text-muted-foreground" />
-                              {formatDate(parcela.data_de_vencimento)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">{getStatusBadge(parcela.status)}</TableCell>
-                          <TableCell className="text-sm whitespace-nowrap">
-                            {parcela.data_de_pagamento ? 
-                              formatDate(parcela.data_de_pagamento) : 
-                              <span className="text-muted-foreground">-</span>
-                            }
-                          </TableCell>
-                          <TableCell className="text-sm whitespace-nowrap">
-                            {parcela.metodo_de_pagamento || <span className="text-muted-foreground">-</span>}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {parcela.status === 'pendente' && (
-                              <Button
-                                size="sm"
-                                className="h-8 text-xs px-3"
-                                onClick={() => {
-                                  setSelectedParcela(parcela)
-                                  setIsPaymentModalOpen(true)
-                                }}
-                              >
-                                Confirmar Pagamento
-                              </Button>
-                            )}
-                          </TableCell>
+            {/* Tabela de Parcelas */}
+            <div className="flex-1 min-h-0">
+              <Card className="h-full flex flex-col">
+                <CardHeader className="flex-shrink-0 pb-3">
+                  <CardTitle className="text-lg">Parcelas</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {parcelas.length} parcela(s) encontrada(s)
+                  </p>
+                </CardHeader>
+                <CardContent className="flex-1 min-h-0 p-0">
+                  <div className="overflow-auto h-full">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-background">
+                        <TableRow>
+                          <TableHead className="text-xs">Parcela</TableHead>
+                          <TableHead className="text-xs">Valor</TableHead>
+                          <TableHead className="text-xs">Vencimento</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                          <TableHead className="text-xs">Pagamento</TableHead>
+                          <TableHead className="text-xs">Método</TableHead>
+                          <TableHead className="text-xs">Ações</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </div>
+                      </TableHeader>
+                      <TableBody>
+                        {isLoading ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8">
+                              Carregando parcelas...
+                            </TableCell>
+                          </TableRow>
+                        ) : parcelas.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                              Nenhuma parcela encontrada
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          parcelas.map((parcela, index) => (
+                            <TableRow key={parcela.id} className="text-xs">
+                              <TableCell className="font-medium">
+                                {index + 1}ª Parcela
+                              </TableCell>
+                              <TableCell>{formatCurrency(parcela.total)}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {formatDate(parcela.data_de_vencimento)}
+                                </div>
+                              </TableCell>
+                              <TableCell>{getStatusBadge(parcela.status)}</TableCell>
+                              <TableCell>
+                                {parcela.data_de_pagamento ? formatDate(parcela.data_de_pagamento) : '-'}
+                              </TableCell>
+                              <TableCell>
+                                {parcela.metodo_de_pagamento || '-'}
+                              </TableCell>
+                              <TableCell>
+                                {parcela.status === 'pendente' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-7"
+                                    onClick={() => handleConfirmPayment(parcela)}
+                                  >
+                                    Confirmar Pagamento
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Confirmação de Pagamento - Compacto */}
+      {/* Modal de Confirmação de Pagamento */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg">Confirmar Pagamento</DialogTitle>
+            <DialogTitle>Confirmar Pagamento</DialogTitle>
+            <DialogDescription>
+              Confirme os detalhes do pagamento da parcela selecionada.
+            </DialogDescription>
           </DialogHeader>
-
+          
           <div className="space-y-4">
-            {selectedParcela && (
-              <div className="p-3 bg-muted rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Valor:</span>
-                  <span className="text-lg font-bold">{formatCurrency(selectedParcela.total)}</span>
-                </div>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs text-muted-foreground">Vencimento:</span>
-                  <span className="text-xs text-muted-foreground">{formatDate(selectedParcela.data_de_vencimento)}</span>
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="data_pagamento" className="text-sm">Data do Pagamento</Label>
-                <Input
-                  id="data_pagamento"
-                  type="date"
-                  value={paymentData.data_de_pagamento}
-                  onChange={(e) => setPaymentData(prev => ({ 
-                    ...prev, 
-                    data_de_pagamento: e.target.value 
-                  }))}
-                  className="h-9"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="metodo_pagamento" className="text-sm">Método</Label>
-                <Select
-                  value={paymentData.metodo_de_pagamento}
-                  onValueChange={(value) => setPaymentData(prev => ({ 
-                    ...prev, 
-                    metodo_de_pagamento: value 
-                  }))}
-                  required
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PIX">PIX</SelectItem>
-                    <SelectItem value="BOLETO">Boleto</SelectItem>
-                    <SelectItem value="CARTAO_CREDITO">Cartão de Crédito</SelectItem>
-                    <SelectItem value="CARTAO_DEBITO">Cartão de Débito</SelectItem>
-                    <SelectItem value="TRANSFERENCIA">Transferência</SelectItem>
-                    <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
-                    <SelectItem value="CHEQUE">Cheque</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             <div>
-              <Label htmlFor="observacoes" className="text-sm">Observações (opcional)</Label>
-              <Textarea
-                id="observacoes"
-                value={paymentData.observacoes}
-                onChange={(e) => setPaymentData(prev => ({ 
-                  ...prev, 
-                  observacoes: e.target.value 
-                }))}
-                placeholder="Observações sobre o pagamento..."
-                className="h-20 resize-none"
+              <Label htmlFor="data_pagamento">Data do Pagamento</Label>
+              <Input
+                id="data_pagamento"
+                type="date"
+                value={paymentData.data_de_pagamento}
+                onChange={(e) => setPaymentData({ ...paymentData, data_de_pagamento: e.target.value })}
               />
             </div>
-
-            <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsPaymentModalOpen(false)}
-                className="flex-1 h-9"
+            
+            <div>
+              <Label htmlFor="metodo_pagamento">Método de Pagamento</Label>
+              <Select
+                value={paymentData.metodo_de_pagamento}
+                onValueChange={(value) => setPaymentData({ ...paymentData, metodo_de_pagamento: value })}
               >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleConfirmPayment}
-                className="flex-1 h-9"
-                disabled={!paymentData.metodo_de_pagamento}
-              >
-                Confirmar Pagamento
-              </Button>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o método" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                  <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                  <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
+                  <SelectItem value="pix">PIX</SelectItem>
+                  <SelectItem value="transferencia">Transferência</SelectItem>
+                  <SelectItem value="boleto">Boleto</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            
+            <div>
+              <Label htmlFor="observacoes">Observações</Label>
+              <Textarea
+                id="observacoes"
+                placeholder="Observações sobre o pagamento..."
+                value={paymentData.observacoes}
+                onChange={(e) => setPaymentData({ ...paymentData, observacoes: e.target.value })}
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handlePaymentSubmit}>
+              Confirmar Pagamento
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

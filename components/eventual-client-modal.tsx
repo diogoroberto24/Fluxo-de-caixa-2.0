@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -304,6 +304,12 @@ export function EventualClientModal({
           <DialogTitle>
             {isEditMode ? "Editar Cliente Eventual" : "Novo Cliente Eventual"}
           </DialogTitle>
+          <DialogDescription>
+            {isEditMode 
+              ? "Atualize as informações do cliente eventual, incluindo dados pessoais, valor do serviço e configurações de parcelamento." 
+              : "Cadastre um novo cliente eventual preenchendo as informações obrigatórias e configurando a forma de pagamento."
+            }
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

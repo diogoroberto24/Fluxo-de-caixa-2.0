@@ -2,9 +2,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/db';
 
 // Obter todos os lançamentos do balanço
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const cobrancaId = searchParams.get('cobranca_id');
+    
+    const where: any = {};
+    if (cobrancaId) {
+      where.cobranca_id = cobrancaId;
+    }
+    
     const balancos = await prisma.balanco.findMany({
+      where,
       include: {
         cobranca: true,
         recorrencia: true
@@ -26,12 +35,13 @@ export async function POST(request: Request) {
     const novoBalanco = await prisma.balanco.create({
       data: {
         tipo: body.tipo,
-        valor: Math.round(body.valor), // Converter para centavos
+        valor: Math.round(body.valor * 100), // Converter para centavos
         descricao: body.descricao,
         status: body.status,
         data_de_fato: new Date(body.data_de_fato),
         cobranca_id: body.cobranca_id,
         recorrencia_id: body.recorrencia_id,
+        metadata: body.metadata
       }
     });
     

@@ -8,48 +8,51 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-//     const useCase = new CriarClienteUseCase();
+    // Validação de campos obrigatórios
+    if (!body.nome || !body.documento || !body.tributacao) {
+      return NextResponse.json(
+        { message: "Campos obrigatórios: nome, documento e tributação" },
+        { status: 400 }
+      );
+    }
 
-//    const result = await useCase.execute(body);
+    // Verificar se o documento já existe
+    const existingClient = await prisma.cliente.findUnique({
+      where: { documento: body.documento }
+    });
 
-//     if (result instanceof AppError) {
-//       return NextResponse.json(
-//         {
-//           success: false,
-//           error: result.message,
-//           code: result.code,
-//         },
-//         { status: result.statusCode }
-//       );
-//     } else {
-//     return NextResponse.json(result, { status: 201 });
-//     }
+    if (existingClient) {
+      return NextResponse.json(
+        { message: "Já existe um cliente com este documento" },
+        { status: 400 }
+      );
+    }
 
     const newClient = await prisma.cliente.create({
       data: {
         nome: body.nome,
         documento: body.documento,
-        email: body.email,
-        telefone: body.telefone,
-        cliente_rua: body.cliente_rua,
-        cliente_numero: body.cliente_numero,
-        cliente_bairro: body.cliente_bairro,
-        cliente_cidade: body.cliente_cidade,
-        cliente_estado: body.cliente_estado,
-        cliente_pais: body.cliente_pais,
-        socio_nome: body.socio_nome,
-        socio_documento: body.socio_documento,
-        socio_rua: body.socio_rua,
-        socio_numero: body.socio_numero,
-        socio_bairro: body.socio_bairro,
-        socio_cidade: body.socio_cidade,
-        socio_estado: body.socio_estado,
-        socio_pais: body.socio_pais,
+        email: body.email || "",
+        telefone: body.telefone || "",
+        cliente_rua: body.cliente_rua || "",
+        cliente_numero: body.cliente_numero || "",
+        cliente_bairro: body.cliente_bairro || "",
+        cliente_cidade: body.cliente_cidade || "",
+        cliente_estado: body.cliente_estado || "",
+        cliente_pais: body.cliente_pais || "Brasil",
+        socio_nome: body.socio_nome || "",
+        socio_documento: body.socio_documento || "",
+        socio_rua: body.socio_rua || "",
+        socio_numero: body.socio_numero || "",
+        socio_bairro: body.socio_bairro || "",
+        socio_cidade: body.socio_cidade || "",
+        socio_estado: body.socio_estado || "",
+        socio_pais: body.socio_pais || "Brasil",
         tributacao: body.tributacao,
-        observacao: body.observacao,
+        observacao: body.observacao || "",
         honorarios: body.honorarios || 0,
-        status: body.status || "Ativo", //Assumindo um valor padrão se não for fornecido
-        ativo: body.ativo ?? true, //Assumindo um valor padrão se não for fornecido
+        status: body.status || "Ativo",
+        ativo: body.ativo ?? true,
       },
     });
 
