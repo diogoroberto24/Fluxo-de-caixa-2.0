@@ -8,7 +8,7 @@ import { ClientsManagement } from "@/components/clients-management"
 import { EventualClientsManagement } from "@/components/eventual-clients-management"
 import { ReceivablesManagement } from "@/components/receivables-management"
 import { PayablesManagement } from "@/components/payables-management"
-import { ReportsContracts } from "@/components/reports-contracts"
+import { ContractsManagement } from "@/components/contracts-management"
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("dashboard")
@@ -28,7 +28,7 @@ export default function HomePage() {
       case "payables":
         return <PayablesManagement />
       case "reports":
-        return <ReportsContracts />
+        return <ContractsManagement />
       default:
         return <Dashboard />
     }

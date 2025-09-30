@@ -15,7 +15,7 @@ const menuItems = [
   { id: "clients", label: "Clientes", icon: Users },
   { id: "receivables", label: "Recebimentos", icon: TrendingUp },
   { id: "payables", label: "Contas a Pagar", icon: CreditCard },
-  { id: "reports", label: "Relatórios e Contratos", icon: FileText },
+  { id: "reports", label: "Gestão de Contratos", icon: FileText },
 ]
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {

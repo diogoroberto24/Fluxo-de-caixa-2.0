@@ -3,7 +3,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
 }
 
 datasource db {
@@ -86,6 +85,7 @@ model Cliente {
   cobrancas    Cobranca[]
   recorrencias Recorrencia[]
   historico_honorarios  HistoricoHonorario[]
+  contratos    Contrato[]
 
   @@map("clientes")
 }
@@ -294,4 +294,19 @@ model ClienteEventual {
   cobrancas Cobranca[]
 
   @@map("clientes_eventuais")
+}
+
+model Contrato {
+  id          String @id @default(cuid())
+  cliente_id  String
+  pdf_url     String?
+  metadata    Json?  @default("{}")
+  
+  data_de_criacao     DateTime @default(now())
+  data_de_atualizacao DateTime @updatedAt
+  
+  // Relacionamento
+  cliente Cliente @relation(fields: [cliente_id], references: [id], onDelete: Cascade)
+  
+  @@map("contratos")
 }

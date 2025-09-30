@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db";
-import { Prisma } from "@/lib/generated/prisma";
 import {
   Cliente,
   IClienteRepository,
@@ -55,19 +54,19 @@ export class ClienteRepository implements IClienteRepository {
     total: number;
   }> {
     const {
-      page = 1,
-      limit = 20,
       search,
       status,
       tributacao,
       ativo,
-      orderBy = "nome",
+      page = 1,
+      limit = 10,
+      orderBy = "data_de_criacao",
       order = "asc",
     } = filters;
 
     const skip = (page - 1) * limit;
 
-    const where: Prisma.ClienteWhereInput = {
+    const where: any = {
       data_de_delecao: null,
     };
 
@@ -91,7 +90,7 @@ export class ClienteRepository implements IClienteRepository {
       where.ativo = ativo;
     }
 
-    const orderByMap: Record<string, Prisma.ClienteOrderByWithRelationInput> = {
+    const orderByMap: Record<string, any> = {
       nome: { nome: order },
       documento: { documento: order },
       data_de_criacao: { data_de_criacao: order },
@@ -144,17 +143,15 @@ export class ClienteRepository implements IClienteRepository {
     documento: string,
     excludeId?: string
   ): Promise<boolean> {
-    const cleanDoc = documento.replace(/[^\d]/g, "");
-
-    const where: Prisma.ClienteWhereInput = {
-      OR: [{ documento }, { documento: cleanDoc }],
+    const where: any = {
+      documento,
       data_de_delecao: null,
     };
-
+  
     if (excludeId) {
-      where.NOT = { id: excludeId };
+      where.id = { not: excludeId };
     }
-
+  
     const count = await prisma.cliente.count({ where });
     return count > 0;
   }
@@ -178,8 +175,8 @@ export class ClienteRepository implements IClienteRepository {
       where: { data_de_delecao: null },
       _count: { status: true },
     });
-
-    return counts.reduce((acc, item) => {
+  
+    return counts.reduce((acc: Record<string, number>, item: any) => {
       acc[item.status] = item._count.status;
       return acc;
     }, {} as Record<string, number>);

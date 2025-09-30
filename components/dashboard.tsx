@@ -10,6 +10,7 @@ import { RevenueChart } from "@/components/revenue-chart"
 import { RecentPayments } from "@/components/recent-payments"
 import { LiquidGlassEffect } from "@/components/liquid-glass-effect"
 import { ClientsModal } from "@/components/clients-modal"
+import { ContractsManagement } from "@/components/contracts-management"
 
 // Definir a interface do cliente
 interface Client {
@@ -76,6 +77,7 @@ export function Dashboard() {
   const [selectedClientType, setSelectedClientType] = useState<"active" | "overdue" | "all">("active")
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeSection, setActiveSection] = useState<"dashboard" | "reports">("dashboard")
   
   // Buscar dados reais do banco de dados
   useEffect(() => {
@@ -115,6 +117,46 @@ export function Dashboard() {
     }
   }
 
+  const renderContent = () => {
+    switch (activeSection) {
+      case "reports":
+        return <ContractsManagement />
+      case "dashboard":
+      default:
+        return (
+          <>
+            {/* Charts and Tables */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <LiquidGlassEffect>
+                <RevenueChart />
+              </LiquidGlassEffect>
+              <LiquidGlassEffect>
+                <div className="grid gap-4 md:col-span-2">
+                  <RecentPayments />
+                </div>
+              </LiquidGlassEffect>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-4">
+              <LiquidGlassEffect isButton>
+                <Button variant="outline" className="gap-2 bg-transparent">
+                  <Eye className="h-4 w-4" />
+                  Exibir Contas a Pagar
+                </Button>
+              </LiquidGlassEffect>
+              <LiquidGlassEffect isButton>
+                <Button variant="outline" className="gap-2 bg-transparent">
+                  <RefreshCw className="h-4 w-4" />
+                  Sincronizar Dados
+                </Button>
+              </LiquidGlassEffect>
+            </div>
+          </>
+        )
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -124,6 +166,24 @@ export function Dashboard() {
           <p className="text-muted-foreground mt-1">Visão geral do fluxo de caixa e indicadores principais</p>
         </div>
         <div className="flex gap-3">
+          <LiquidGlassEffect isButton>
+            <Button 
+              variant={activeSection === "dashboard" ? "default" : "outline"} 
+              className="gap-2 bg-transparent"
+              onClick={() => setActiveSection("dashboard")}
+            >
+              Dashboard
+            </Button>
+          </LiquidGlassEffect>
+          <LiquidGlassEffect isButton>
+            <Button 
+              variant={activeSection === "reports" ? "default" : "outline"} 
+              className="gap-2 bg-transparent"
+              onClick={() => setActiveSection("reports")}
+            >
+              Relatórios
+            </Button>
+          </LiquidGlassEffect>
           <LiquidGlassEffect isButton>
             <Button variant="outline" className="gap-2 bg-transparent">
               <RefreshCw className="h-4 w-4" />
@@ -178,33 +238,8 @@ export function Dashboard() {
         })}
       </div>
 
-      {/* Charts and Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LiquidGlassEffect>
-          <RevenueChart />
-        </LiquidGlassEffect>
-        <LiquidGlassEffect>
-          <div className="grid gap-4 md:col-span-2">
-            <RecentPayments />
-          </div>
-        </LiquidGlassEffect>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-4">
-        <LiquidGlassEffect isButton>
-          <Button variant="outline" className="gap-2 bg-transparent">
-            <Eye className="h-4 w-4" />
-            Exibir Contas a Pagar
-          </Button>
-        </LiquidGlassEffect>
-        <LiquidGlassEffect isButton>
-          <Button variant="outline" className="gap-2 bg-transparent">
-            <RefreshCw className="h-4 w-4" />
-            Sincronizar Dados
-          </Button>
-        </LiquidGlassEffect>
-      </div>
+      {/* Render Content Based on Active Section */}
+      {renderContent()}
 
       <ClientsModal isOpen={modalOpen} onClose={() => setModalOpen(false)} clientType={selectedClientType} />
     </div>
