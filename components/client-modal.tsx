@@ -45,6 +45,16 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData, o
     socio_cidade: "",
     socio_estado: "",
     socio_pais: "Brasil",
+    // Novos campos para representante da empresa
+    representante_nome: "",
+    representante_rg: "",
+    representante_cpf: "",
+    representante_rua: "",
+    representante_bairro: "",
+    representante_municipio: "",
+    representante_cep: "",
+    // Novo campo para data de pagamento mensal
+    data_pagamento_mensal: "",
     tributacao: "",
     modulos: [] as string[],
     honorarios: "",
@@ -131,6 +141,16 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData, o
         socio_cidade: clientData.socio_cidade || "",
         socio_estado: clientData.socio_estado || "",
         socio_pais: clientData.socio_pais || "Brasil",
+        // Novos campos para representante da empresa
+        representante_nome: clientData.representante_nome || "",
+        representante_rg: clientData.representante_rg || "",
+        representante_cpf: clientData.representante_cpf || "",
+        representante_rua: clientData.representante_rua || "",
+        representante_bairro: clientData.representante_bairro || "",
+        representante_municipio: clientData.representante_municipio || "",
+        representante_cep: clientData.representante_cep || "",
+        // Novo campo para data de pagamento mensal
+        data_pagamento_mensal: clientData.data_pagamento_mensal ? new Date(clientData.data_pagamento_mensal).toISOString().split('T')[0] : "",
         tributacao: clientData.tributacao || "",
         modulos: mappedModules,
         honorarios: clientData.honorarios ? (clientData.honorarios / 100).toFixed(2) : "",
@@ -163,6 +183,14 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData, o
         socio_cidade: "",
         socio_estado: "",
         socio_pais: "Brasil",
+        representante_nome: "",
+        representante_rg: "",
+        representante_cpf: "",
+        representante_rua: "",
+        representante_bairro: "",
+        representante_municipio: "",
+        representante_cep: "",
+        data_pagamento_mensal: "",
         tributacao: "",
         modulos: [],
         honorarios: "",
@@ -288,9 +316,19 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData, o
       // Agora criar ou atualizar o cliente com os produtos e honorários
       const apiUrl = '/api/clients';
       const method = isEditMode ? 'PUT' : 'POST';
+      
+      // Preparar os dados do cliente incluindo os novos campos
+      const clienteData = {
+        ...formData,
+        honorarios: honorariosValue,
+        produtos: produtosFormatados,
+        // Converter a data de pagamento para DateTime
+        data_pagamento_mensal: new Date(formData.data_pagamento_mensal).toISOString()
+      };
+      
       const payload = isEditMode 
-        ? { id: clientData.id, ...formData, honorarios: honorariosValue, produtos: produtosFormatados } 
-        : { ...formData, honorarios: honorariosValue, produtos: produtosFormatados };
+        ? { id: clientData.id, ...clienteData } 
+        : clienteData;
 
       const response = await fetch(apiUrl, {
         method: method,
@@ -323,31 +361,39 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData, o
       
       if (!isEditMode) {
         setFormData({
-          nome: "",
-          documento: "",
-          email: "",
-          telefone: "",
-          cliente_rua: "",
-          cliente_numero: "",
-          cliente_bairro: "",
-          cliente_cidade: "",
-          cliente_estado: "",
-          cliente_pais: "Brasil",
-          socio_nome: "",
-          socio_documento: "",
-          socio_rua: "",
-          socio_numero: "",
-          socio_bairro: "",
-          socio_cidade: "",
-          socio_estado: "",
-          socio_pais: "Brasil",
-          tributacao: "",
-          modulos: [],
-          honorarios: "",
-          observacao: "",
-          status: "Ativo",
-          ativo: true
-        })
+        nome: "",
+        documento: "",
+        email: "",
+        telefone: "",
+        cliente_rua: "",
+        cliente_numero: "",
+        cliente_bairro: "",
+        cliente_cidade: "",
+        cliente_estado: "",
+        cliente_pais: "Brasil",
+        socio_nome: "",
+        socio_documento: "",
+        socio_rua: "",
+        socio_numero: "",
+        socio_bairro: "",
+        socio_cidade: "",
+        socio_estado: "",
+        socio_pais: "Brasil",
+        representante_nome: "",
+        representante_rg: "",
+        representante_cpf: "",
+        representante_rua: "",
+        representante_bairro: "",
+        representante_municipio: "",
+        representante_cep: "",
+        data_pagamento_mensal: "",
+        tributacao: "",
+        modulos: [],
+        honorarios: "",
+        observacao: "",
+        status: "Ativo",
+        ativo: true
+      })
       }
     } catch (error: any) {
       console.error("Erro ao salvar cliente:", error.message)
@@ -425,7 +471,7 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData, o
             </div>
 
             <div className="space-y-3 border-t pt-4">
-              <Label className="text-base font-medium">Endereço do Cliente*</Label>
+              <Label className="text-base font-medium">Endereço da Empresa*</Label>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="cliente_rua">Rua*</Label>
@@ -485,6 +531,82 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData, o
                     required
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <Label className="text-base font-medium">Dados Representante*</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="representante_nome">Nome Completo*</Label>
+                  <Input
+                    id="representante_nome"
+                    value={formData.representante_nome}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, representante_nome: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="representante_rg">RG*</Label>
+                  <Input
+                    id="representante_rg"
+                    value={formData.representante_rg}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, representante_rg: e.target.value }))}
+                    placeholder="00.000.000-0"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="representante_cpf">CPF*</Label>
+                  <Input
+                    id="representante_cpf"
+                    value={formData.representante_cpf}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, representante_cpf: e.target.value }))}
+                    placeholder="000.000.000-00"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="representante_cep">CEP*</Label>
+                  <Input
+                    id="representante_cep"
+                    value={formData.representante_cep}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, representante_cep: e.target.value }))}
+                    placeholder="00000-000"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="representante_rua">Rua*</Label>
+                  <Input
+                    id="representante_rua"
+                    value={formData.representante_rua}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, representante_rua: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="representante_bairro">Bairro*</Label>
+                  <Input
+                    id="representante_bairro"
+                    value={formData.representante_bairro}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, representante_bairro: e.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="representante_municipio">Município*</Label>
+                <Input
+                  id="representante_municipio"
+                  value={formData.representante_municipio}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, representante_municipio: e.target.value }))}
+                  required
+                />
               </div>
             </div>
 
@@ -609,6 +731,23 @@ export function ClientModal({ isOpen, onClose, isEditMode = false, clientData, o
                 placeholder="R$ 0,00"
                 required
               />
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <Label className="text-base font-medium">Configurações de Pagamento</Label>
+              <div>
+                <Label htmlFor="data_pagamento_mensal">Data de Pagamento Mensal*</Label>
+                <Input
+                  id="data_pagamento_mensal"
+                  type="date"
+                  value={formData.data_pagamento_mensal}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, data_pagamento_mensal: e.target.value }))}
+                  required
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Define a data do primeiro pagamento e os subsequentes ocorrerão no mesmo dia dos meses seguintes
+                </p>
+              </div>
             </div>
 
             <div>

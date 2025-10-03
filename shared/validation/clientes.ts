@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+// Schema para produtos associados ao cliente
+export const produtoClienteSchema = z.object({
+  produto_id: z.string().cuid("ID do produto deve ser válido"),
+  quantidade: z.number().int().min(1, "Quantidade deve ser pelo menos 1").default(1),
+  nome: z.string().min(1, "Nome do produto é obrigatório"),
+  descricao: z.string().optional(),
+  valor: z.number().min(0, "Valor deve ser positivo").default(0),
+  status: z.string().default("Ativo"),
+  ativo: z.boolean().default(true),
+});
+
 export const criarClienteSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
   documento: z.string().min(11, "Documento deve ter pelo menos 11 caracteres"),
@@ -19,12 +30,21 @@ export const criarClienteSchema = z.object({
   socio_cidade: z.string().optional(),
   socio_estado: z.string().optional(),
   socio_pais: z.string().optional(),
+  representante_nome: z.string().optional(),
+  representante_rg: z.string().optional(),
+  representante_cpf: z.string().optional(),
+  representante_rua: z.string().optional(),
+  representante_bairro: z.string().optional(),
+  representante_municipio: z.string().optional(),
+  representante_cep: z.string().optional(),
+  data_pagamento_mensal: z.date().or(z.string().transform((str) => new Date(str))),
   tributacao: z.string().min(1, "Tributação é obrigatória"),
   honorarios: z.number().int().min(0, "Honorários devem ser positivos").default(0),
   observacao: z.string().optional(),
   status: z.string().default("ativo"),
   ativo: z.boolean().default(true),
   metadata: z.record(z.any()).optional().default({}),
+  produtos: z.array(produtoClienteSchema).optional().default([]),
 });
 
 export const atualizarClienteSchema = criarClienteSchema.partial().extend({

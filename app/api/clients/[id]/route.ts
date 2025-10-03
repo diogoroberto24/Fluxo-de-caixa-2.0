@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClientById } from "../route"; // Importa a função auxiliar
 import { prisma } from "../../../../lib/db";
+import { normalizeDateOnly } from "@/shared/utils/date";
 
 interface ClientContext {
   params: {
@@ -60,6 +61,9 @@ export async function PUT(request: Request, context: ClientContext) {
         socio_cidade: body.socio_cidade ?? existingClient.socio_cidade,
         socio_estado: body.socio_estado ?? existingClient.socio_estado,
         socio_pais: body.socio_pais ?? existingClient.socio_pais,
+        data_pagamento_mensal: body.data_pagamento_mensal
+          ? normalizeDateOnly(body.data_pagamento_mensal) ?? existingClient.data_pagamento_mensal
+          : existingClient.data_pagamento_mensal,
         tributacao: body.tributacao ?? existingClient.tributacao,
         honorarios: body.honorarios ?? existingClient.honorarios,
         observacao: body.observacao ?? existingClient.observacao,

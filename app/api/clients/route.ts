@@ -1,12 +1,17 @@
+// Arquivo: app/api/clients/route.ts
+// Ajustes: import dos utilitários e normalização de data_pagamento_mensal
+
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/db";
+import type { CreateClienteInput } from "@/shared/validation/clientes";
+import { normalizeDateOnly, nowUTCDateOnly } from "@/shared/utils/date";
 
 // import { CriarClienteUseCase } from "@/server/use-cases/clientes/criar-cliente";
 // import { AppError } from "@/shared/errors";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body: CreateClienteInput = await request.json();
 
     // Validação de campos obrigatórios
     if (!body.nome || !body.documento || !body.tributacao) {
@@ -48,6 +53,14 @@ export async function POST(request: Request) {
         socio_cidade: body.socio_cidade || "",
         socio_estado: body.socio_estado || "",
         socio_pais: body.socio_pais || "Brasil",
+        representante_nome: body.representante_nome || "",
+        representante_rg: body.representante_rg || "",
+        representante_cpf: body.representante_cpf || "",
+        representante_rua: body.representante_rua || "",
+        representante_bairro: body.representante_bairro || "",
+        representante_municipio: body.representante_municipio || "",
+        representante_cep: body.representante_cep || "",
+        data_pagamento_mensal: normalizeDateOnly(body.data_pagamento_mensal) ?? nowUTCDateOnly(),
         tributacao: body.tributacao,
         observacao: body.observacao || "",
         honorarios: body.honorarios || 0,
@@ -130,6 +143,10 @@ export async function PUT(request: Request) {
         socio_cidade: dataToUpdate.socio_cidade,
         socio_estado: dataToUpdate.socio_estado,
         socio_pais: dataToUpdate.socio_pais,
+        // Padroniza a data de pagamento mensal (se vier no body)
+        data_pagamento_mensal: dataToUpdate.data_pagamento_mensal
+          ? normalizeDateOnly(dataToUpdate.data_pagamento_mensal) ?? undefined
+          : undefined,
         tributacao: dataToUpdate.tributacao,
         honorarios: dataToUpdate.honorarios,
         observacao: dataToUpdate.observacao,

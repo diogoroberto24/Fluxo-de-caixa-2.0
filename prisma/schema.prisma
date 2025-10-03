@@ -69,6 +69,16 @@ model Cliente {
   socio_estado    String?
   socio_pais      String?
 
+  representante_nome      String
+  representante_rg        String
+  representante_cpf       String
+  representante_rua       String
+  representante_bairro    String
+  representante_municipio String
+  representante_cep       String
+
+  data_pagamento_mensal   DateTime
+
   tributacao String
   honorarios Int      @default(0) // em centavos
   observacao String?

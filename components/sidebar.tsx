@@ -2,8 +2,9 @@
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, TrendingUp, CreditCard, FileText } from "lucide-react"
+import { LayoutDashboard, Users, TrendingUp, CreditCard, FileText, Eye } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import Link from "next/link"
 
 interface SidebarProps {
   activeTab: string
@@ -48,6 +49,17 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             </Button>
           )
         })}
+        
+        {/* Link para Preview de Contratos */}
+        <Link href="/preview-contrato">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            <Eye className="h-5 w-5" />
+            Preview de Contratos
+          </Button>
+        </Link>
       </nav>
 
       {/* Theme Toggle */}
