@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 import { FileText, Download, RefreshCw, User, AlertCircle, Search, Filter } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ContractDateModal } from "@/components/contract-date-modal"
 
 interface ClientePendente {
   id: string
@@ -30,6 +31,8 @@ export function ContractsManagement() {
   const [generatingContracts, setGeneratingContracts] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("todos")
+  const [showDateModal, setShowDateModal] = useState(false)
+  const [selectedClient, setSelectedClient] = useState<{ id: string; nome: string } | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -150,6 +153,20 @@ export function ContractsManagement() {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
+  const handleOpenDateModal = (clienteId: string, clienteNome: string) => {
+    setSelectedClient({ id: clienteId, nome: clienteNome })
+    setShowDateModal(true)
+  }
+
+  const handleCloseDateModal = () => {
+    setShowDateModal(false)
+    setSelectedClient(null)
+  }
+
+  const handleContractSuccess = () => {
+    fetchClientesPendentes()
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -250,31 +267,39 @@ export function ContractsManagement() {
       {/* Lista de Clientes Pendentes */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Clientes Pendentes de Contrato ({filteredClientes.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-orange-500" />
+              <CardTitle>Clientes Pendentes de Contrato</CardTitle>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchClientesPendentes}
+              disabled={isLoading}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <RefreshCw className="h-6 w-6 animate-spin" />
-              <span className="ml-2">Carregando...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : filteredClientes.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              {clientesPendentes.length === 0 ? (
-                <>
-                  <p>Nenhum cliente pendente de contrato</p>
-                  <p className="text-sm">Todos os clientes estão com contratos atualizados!</p>
-                </>
-              ) : (
-                <>
-                  <p>Nenhum cliente encontrado</p>
-                  <p className="text-sm">Tente ajustar os filtros de busca</p>
-                </>
-              )}
+            <div className="text-center py-8">
+              <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                {searchTerm || statusFilter !== "todos" ? "Nenhum cliente encontrado" : "Nenhum cliente pendente"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {searchTerm || statusFilter !== "todos" 
+                  ? "Tente ajustar os filtros de busca." 
+                  : "Todos os clientes já possuem contratos atualizados."}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -317,21 +342,12 @@ export function ContractsManagement() {
                       <TableCell>
                         <Button
                           size="sm"
-                          onClick={() => handleGenerateContract(cliente.id, cliente.nome)}
+                          onClick={() => handleOpenDateModal(cliente.id, cliente.nome)}
                           disabled={generatingContracts.has(cliente.id)}
                           className="gap-2"
                         >
-                          {generatingContracts.has(cliente.id) ? (
-                            <>
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                              Gerando...
-                            </>
-                          ) : (
-                            <>
-                              <Download className="h-3 w-3" />
-                              Gerar Contrato
-                            </>
-                          )}
+                          <Download className="h-3 w-3" />
+                          Gerar Contrato
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -342,6 +358,17 @@ export function ContractsManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Data do Contrato */}
+      {selectedClient && (
+        <ContractDateModal
+          isOpen={showDateModal}
+          onClose={handleCloseDateModal}
+          clienteId={selectedClient.id}
+          clienteNome={selectedClient.nome}
+          onSuccess={handleContractSuccess}
+        />
+      )}
     </div>
   )
 }
