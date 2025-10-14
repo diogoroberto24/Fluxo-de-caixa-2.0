@@ -69,6 +69,38 @@ export async function POST(request: Request) {
       },
     });
 
+    // Registro automático: primeiro pagamento de cliente fixo
+    if (newClient.honorarios && newClient.honorarios > 0) {
+      const today = new Date();
+      const vencimento = today.toISOString().split('T')[0];
+
+      const cobrancaInicial = await prisma.cobranca.create({
+        data: {
+          subtotal: newClient.honorarios,
+          desconto: 0,
+          total: newClient.honorarios,
+          status: 'pago',
+          data_de_vencimento: vencimento,
+          data_de_pagamento: today,
+          metodo_de_pagamento: 'PIX',
+          observacoes: `Primeiro pagamento automático - ${newClient.nome}`,
+          cliente_id: newClient.id,
+        },
+      });
+
+      await prisma.balanco.create({
+        data: {
+          tipo: 'ENTRADA',
+          valor: newClient.honorarios,
+          descricao: `Honorários iniciais - Cliente fixo: ${newClient.nome}`,
+          status: 'confirmado',
+          data_de_fato: today,
+          cobranca_id: cobrancaInicial.id,
+          metadata: { categoria: 'Honorários' },
+        },
+      });
+    }
+
     // Se houver um serviço selecionada, cria as associações
     if (body.produtos && body.produtos.length > 0) {
       for (const produtoData of body.produtos) {

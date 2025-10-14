@@ -539,7 +539,7 @@ export class GerarContratoUseCase {
       doc.text('Anderson Cardozo Acessoria Contábil', margin + 100, currentY)
       currentY += 4
       doc.text(`CNPJ: ${cpfCliente}`, margin, currentY)
-      doc.text('CNPJ: 47.308.673/0001-77', margin + 100, currentY)
+      doc.text('CNPJ: 47.308.673/0001-77 - CRC/PR 079908/O-0', margin + 100, currentY)
       currentY += 15
 
       // Salvar o PDF

@@ -6,21 +6,60 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const cobrancaId = searchParams.get('cobranca_id');
-    
-    const where: any = {};
+    const mes = searchParams.get('mes'); // 1-12
+    const ano = searchParams.get('ano'); // YYYY
+    const status = searchParams.get('status'); // 'confirmado' | 'previsto' | etc.
+    const tipoCliente = searchParams.get('tipo_cliente'); // 'fixo' | 'eventual'
+
+    const where: any = {
+      tipo: 'ENTRADA',
+    };
+
     if (cobrancaId) {
       where.cobranca_id = cobrancaId;
     }
-    
+
+    if (status) {
+      where.status = status;
+    }
+
+    // Filtra por mês/ano com base em data_de_fato
+    if (mes && ano) {
+      const m = Number(mes);
+      const y = Number(ano);
+      const start = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0));
+      const end = new Date(Date.UTC(y, m, 0, 23, 59, 59)); // último dia do mês
+      where.data_de_fato = {
+        gte: start,
+        lte: end,
+      };
+    }
+
     const balancos = await prisma.balanco.findMany({
       where,
       include: {
-        cobranca: true,
-        recorrencia: true
-      }
+        cobranca: {
+          include: {
+            cliente: true,
+            cliente_eventual: true,
+          },
+        },
+        recorrencia: true,
+      },
+      orderBy: {
+        data_de_fato: 'desc',
+      },
     });
-    
-    return NextResponse.json(balancos);
+
+    // Filtra tipo de cliente no pós-processamento para simplicidade
+    const filtered = tipoCliente
+      ? balancos.filter((b) => {
+          const isFixo = !!b.cobranca?.cliente_id;
+          return tipoCliente === 'fixo' ? isFixo : !isFixo;
+        })
+      : balancos;
+
+    return NextResponse.json(filtered);
   } catch (error) {
     console.error('Erro ao buscar lançamentos do balanço:', error);
     return NextResponse.json({ message: 'Erro ao buscar lançamentos do balanço' }, { status: 500 });
