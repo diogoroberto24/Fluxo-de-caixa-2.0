@@ -5,13 +5,18 @@ import jsPDF from 'jspdf'
 import { extractDay, nowUTCDateOnly, formatDateBR } from '@/shared/utils/date'
 
 export class GerarContratoUseCase {
-  async execute(clienteId: string): Promise<{ contratoId: string; pdfUrl: string }> {
+  async execute(clienteId: string, dataContrato?: Date): Promise<{ contratoId: string; pdfUrl: string }> {
     console.log('🚀 INICIO - Geração de contrato para cliente:', clienteId)
     
     try {
       // Validação básica
       if (!clienteId || typeof clienteId !== 'string') {
         throw new Error(`ClienteId inválido: ${clienteId}`)
+      }
+
+      // Validar data do contrato se fornecida
+      if (dataContrato && dataContrato > new Date()) {
+        throw new Error('A data do contrato não pode ser futura')
       }
 
       // Buscar cliente
@@ -42,7 +47,7 @@ export class GerarContratoUseCase {
       const fileName = `contrato_${clienteId}_${Date.now()}.pdf`
       const filePath = path.join(uploadsDir, fileName)
       
-      await this.gerarContratoPDF(cliente, filePath)
+      await this.gerarContratoPDF(cliente, filePath, dataContrato)
       
       const fileUrl = `/contratos/${fileName}`
       console.log('✅ Arquivo PDF salvo:', fileName)
@@ -53,8 +58,9 @@ export class GerarContratoUseCase {
         data: {
           cliente_id: clienteId,
           pdf_url: fileUrl,
+          data_geracao: dataContrato || new Date(),
           metadata: {
-            data_geracao: new Date().toISOString(),
+            data_geracao: (dataContrato || new Date()).toISOString(),
             cliente_nome: cliente.nome,
             tipo: 'contrato_pdf'
           }
@@ -73,7 +79,7 @@ export class GerarContratoUseCase {
     }
   }
 
-  private async gerarContratoPDF(cliente: any, filePath: string): Promise<void> {
+  private async gerarContratoPDF(cliente: any, filePath: string, dataContrato?: Date): Promise<void> {
     try {
       // Criar documento PDF com jsPDF
       const doc = new jsPDF({
@@ -208,8 +214,9 @@ export class GerarContratoUseCase {
       const diaPagamento = extractDay(cliente.data_pagamento_mensal)
 
       // Data atual em UTC como date-only e formato BR consistente
-      const dataAtualUTC = nowUTCDateOnly()
-      const dataCompleta = formatDateBR(dataAtualUTC)
+      // Data do contrato (personalizada ou atual)
+      const dataDoContrato = dataContrato || nowUTCDateOnly()
+      const dataCompleta = formatDateBR(dataDoContrato)
 
       // Título principal
       doc.setFontSize(16)

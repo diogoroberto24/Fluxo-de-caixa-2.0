@@ -3,8 +3,10 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { FileText, Download, X } from "lucide-react"
+import { FileText, Download, X, Calendar } from "lucide-react"
 
 interface ContractConfirmationModalProps {
   isOpen: boolean
@@ -20,15 +22,41 @@ export function ContractConfirmationModal({
   clienteNome 
 }: ContractConfirmationModalProps) {
   const [isGenerating, setIsGenerating] = useState(false)
+  const [useCurrentDate, setUseCurrentDate] = useState(true)
+  const [customDate, setCustomDate] = useState("")
   const { toast } = useToast()
 
   const handleGenerateContract = async () => {
     setIsGenerating(true)
     try {
+      // Preparar a data do contrato
+      let dataContrato: Date | undefined = undefined
+      
+      if (!useCurrentDate && customDate) {
+        const selectedDate = new Date(customDate)
+        const today = new Date()
+        
+        // Validar se a data não é futura
+        if (selectedDate > today) {
+          toast({
+            title: "Data inválida",
+            description: "A data do contrato não pode ser futura.",
+            variant: "destructive"
+          })
+          setIsGenerating(false)
+          return
+        }
+        
+        dataContrato = selectedDate
+      }
+
       const response = await fetch('/api/v1/contratos/gerar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clienteId })
+        body: JSON.stringify({ 
+          clienteId,
+          dataContrato: dataContrato?.toISOString()
+        })
       })
 
       if (!response.ok) {
@@ -72,6 +100,14 @@ export function ContractConfirmationModal({
     onClose()
   }
 
+  // Formatar data para input (YYYY-MM-DD)
+  const formatDateForInput = (date: Date) => {
+    return date.toISOString().split('T')[0]
+  }
+
+  // Data máxima (hoje)
+  const maxDate = formatDateForInput(new Date())
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -81,7 +117,7 @@ export function ContractConfirmationModal({
             Gerar Contrato
           </DialogTitle>
           <DialogDescription>
-            Cliente cadastrado com sucesso! Deseja gerar o contrato agora?
+            Cliente cadastrado com sucesso! Configure a data do contrato e gere o documento.
           </DialogDescription>
         </DialogHeader>
 
@@ -95,10 +131,64 @@ export function ContractConfirmationModal({
             </p>
           </div>
 
+          {/* Seleção de Data */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Data do Contrato
+            </Label>
+            
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="current-date"
+                  name="date-option"
+                  checked={useCurrentDate}
+                  onChange={() => setUseCurrentDate(true)}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="current-date" className="text-sm cursor-pointer">
+                  Usar data atual ({new Date().toLocaleDateString('pt-BR')})
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="custom-date"
+                  name="date-option"
+                  checked={!useCurrentDate}
+                  onChange={() => setUseCurrentDate(false)}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="custom-date" className="text-sm cursor-pointer">
+                  Selecionar data personalizada
+                </Label>
+              </div>
+              
+              {!useCurrentDate && (
+                <div className="ml-6">
+                  <Input
+                    type="date"
+                    value={customDate}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                    max={maxDate}
+                    className="w-full"
+                    placeholder="Selecione uma data"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    A data não pode ser futura
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex gap-3">
             <Button 
               onClick={handleGenerateContract}
-              disabled={isGenerating}
+              disabled={isGenerating || (!useCurrentDate && !customDate)}
               className="flex-1 gap-2"
             >
               {isGenerating ? (

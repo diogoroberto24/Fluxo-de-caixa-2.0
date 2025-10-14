@@ -311,6 +311,7 @@ model Contrato {
   cliente_id  String
   pdf_url     String?
   metadata    Json?  @default("{}")
+  data_geracao        DateTime @default(now())
   
   data_de_criacao     DateTime @default(now())
   data_de_atualizacao DateTime @updatedAt
