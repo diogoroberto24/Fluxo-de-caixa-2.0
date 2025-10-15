@@ -1,3 +1,5 @@
+import { RecorrenciaContaPagar } from '@prisma/client'
+
 // Exportar tipos do Prisma
 export type {
   Cliente,
@@ -11,8 +13,11 @@ export type {
   ClienteProduto,
   HistoricoHonorario,
   Usuario,
-  BalancoTipo
-} from '@/lib/generated/prisma'
+  BalancoTipo,
+  ContaPagar,
+  StatusContaPagar,
+  RecorrenciaContaPagar
+} from '@prisma/client'
 
 // Tipos auxiliares da API
 export interface ApiResponse<T = any> {
@@ -112,4 +117,52 @@ export interface DashboardData {
       quantidade: number
     }>
   }
+}
+
+// Tipos para Contas a Pagar
+export interface ContaPagarFilters extends ListParams {
+  status?: string
+  categoria?: string
+  recorrencia?: string
+  data_inicio?: string
+  data_fim?: string
+}
+
+export interface RelatorioMensalContasPagar {
+  mes: number
+  ano: number
+  totalPagar: number
+  totalPago: number
+  totalPendente: number
+  totalVencido: number
+  totalRecebimentos: number
+  saldoMensal: number
+  contasPorCategoria: Array<{
+    categoria: string
+    total: number
+    quantidade: number
+  }>
+  contasPorStatus: Array<{
+    status: string
+    total: number
+    quantidade: number
+  }>
+}
+
+export interface ContaPagarInput {
+  descricao: string
+  valor: number
+  categoria: string
+  data_vencimento: string
+  recorrencia: RecorrenciaContaPagar
+  metadata?: any
+}
+
+export interface ContaPagarUpdate extends Partial<ContaPagarInput> {
+  id: string
+}
+
+export interface MarcarComoPagaInput {
+  id: string
+  data_pagamento?: string
 }

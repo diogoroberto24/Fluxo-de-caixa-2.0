@@ -27,6 +27,16 @@ export async function GET(request: Request) {
     if (mes && ano) {
       const m = Number(mes);
       const y = Number(ano);
+      
+      // Validar se a data não é muito futura
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+      
+      if (y > currentYear + 1 || (y === currentYear + 1 && m > currentMonth)) {
+        return NextResponse.json({ message: 'Data muito futura' }, { status: 400 });
+      }
+      
       const start = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0));
       const end = new Date(Date.UTC(y, m, 0, 23, 59, 59)); // último dia do mês
       where.data_de_fato = {

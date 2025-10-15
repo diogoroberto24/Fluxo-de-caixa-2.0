@@ -4,7 +4,11 @@ import { prisma } from '../../../lib/db';
 // Obter todos os serviços
 export async function GET() {
   try {
-    const servicos = await prisma.servico.findMany({
+    const servicos = await prisma.produto.findMany({
+      where: {
+        tipo: 'servico',
+        ativo: true
+      },
       include: {
         categoria: true
       }
@@ -22,12 +26,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    const novoServico = await prisma.servico.create({
+    const novoServico = await prisma.produto.create({
       data: {
         nome: body.nome,
         descricao: body.descricao,
-        valor: parseFloat(body.valor),
-        categoriaId: body.categoriaId
+        valor: Math.round(parseFloat(body.valor) * 100), // Converter para centavos
+        tipo: 'servico',
+        direcao: body.direcao || 'entrada',
+        categoria_id: body.categoria_id
       }
     });
     

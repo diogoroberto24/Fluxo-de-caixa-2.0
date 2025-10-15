@@ -3,6 +3,7 @@ import { PrismaProdutoRepository } from './implementations/prisma-produto-reposi
 import { PrismaCobrancaRepository } from './implementations/prisma-cobranca-repository'
 import { PrismaCategoriaRepository } from './implementations/prisma-categoria-repository'
 import { PrismaBalancoRepository } from './implementations/prisma-balanco-repository'
+import { PrismaContaPagarRepository } from './implementations/prisma-conta-pagar-repository'
 
 // Factory para criar instâncias dos repositórios
 export class RepositoryFactory {
@@ -11,6 +12,7 @@ export class RepositoryFactory {
   private static _cobrancaRepository: PrismaCobrancaRepository
   private static _categoriaRepository: PrismaCategoriaRepository
   private static _balancoRepository: PrismaBalancoRepository
+  private static _contaPagarRepository: PrismaContaPagarRepository
 
   static get clienteRepository(): PrismaClienteRepository {
     if (!this._clienteRepository) {
@@ -46,11 +48,19 @@ export class RepositoryFactory {
     }
     return this._balancoRepository
   }
+
+  static get contaPagarRepository(): PrismaContaPagarRepository {
+    if (!this._contaPagarRepository) {
+      this._contaPagarRepository = new PrismaContaPagarRepository()
+    }
+    return this._contaPagarRepository
+  }
 }
 
-// Exportar instâncias para uso direto
+// Instâncias singleton dos repositórios
 export const clienteRepository = RepositoryFactory.clienteRepository
 export const produtoRepository = RepositoryFactory.produtoRepository
 export const cobrancaRepository = RepositoryFactory.cobrancaRepository
 export const categoriaRepository = RepositoryFactory.categoriaRepository
 export const balancoRepository = RepositoryFactory.balancoRepository
+export const contaPagarRepository = RepositoryFactory.contaPagarRepository

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,15 +8,13 @@ datasource db {
 }
 
 model Usuario {
-  id        String @id @default(cuid())
-  email     String @unique
-  senha     String
-  nome      String
-  documento String
-  telefone  String
-
-  permissao String // ADMIN | SUPER | USER 
-
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  senha               String
+  nome                String
+  documento           String
+  telefone            String
+  permissao           String
   data_de_criacao     DateTime  @default(now())
   data_de_atualizacao DateTime  @updatedAt
   data_de_delecao     DateTime?
@@ -29,140 +24,264 @@ model Usuario {
 }
 
 model HistoricoHonorario {
-  id              String  @id @default(uuid())
-  cliente_id      String
-  data            DateTime @default(now())
-  valor_anterior  Int     // em centavos
-  valor_novo      Int     // em centavos
-  motivo          String
-  alterado_por    String  @default("Sistema")
-
-  data_de_criacao     DateTime  @default(now())
-  data_de_atualizacao DateTime  @updatedAt
-  metadata            Json?     @default("{}")
-
-  cliente Cliente @relation(fields: [cliente_id], references: [id])
+  id                  String   @id @default(uuid())
+  cliente_id          String
+  data                DateTime @default(now())
+  valor_anterior      Int
+  valor_novo          Int
+  motivo              String
+  alterado_por        String   @default("Sistema")
+  data_de_criacao     DateTime @default(now())
+  data_de_atualizacao DateTime @updatedAt
+  metadata            Json?    @default("{}")
+  cliente             Cliente  @relation(fields: [cliente_id], references: [id])
 
   @@map("historico_honorarios")
 }
 
 model Cliente {
-  id        String @id @default(cuid())
-  nome      String
-  documento String @unique
-  email     String
-  telefone  String
-
-  cliente_rua    String
-  cliente_numero String
-  cliente_bairro String
-  cliente_cidade String
-  cliente_estado String
-  cliente_pais   String
-
-  socio_nome      String?
-  socio_documento String?
-  socio_rua       String?
-  socio_numero    String?
-  socio_bairro    String?
-  socio_cidade    String?
-  socio_estado    String?
-  socio_pais      String?
-
+  id                      String               @id @default(cuid())
+  nome                    String
+  documento               String               @unique
+  email                   String
+  telefone                String
+  cliente_rua             String
+  cliente_numero          String
+  cliente_bairro          String
+  cliente_cidade          String
+  cliente_estado          String
+  cliente_pais            String
+  socio_documento         String?
+  socio_rua               String?
+  socio_numero            String?
+  socio_bairro            String?
+  socio_cidade            String?
+  socio_estado            String?
+  socio_pais              String?
+  tributacao              String
+  observacao              String?
+  status                  String
+  ativo                   Boolean              @default(true)
+  data_de_criacao         DateTime             @default(now())
+  data_de_atualizacao     DateTime             @updatedAt
+  data_de_delecao         DateTime?
+  metadata                Json?                @default("{}")
+  socio_nome              String?
+  honorarios              Int                  @default(0)
+  data_pagamento_mensal   DateTime
+  representante_bairro    String
+  representante_cep       String
+  representante_cpf       String
+  representante_municipio String
   representante_nome      String
   representante_rg        String
-  representante_cpf       String
   representante_rua       String
-  representante_bairro    String
-  representante_municipio String
-  representante_cep       String
-
-  data_pagamento_mensal   DateTime
-
-  tributacao String
-  honorarios Int      @default(0) // em centavos
-  observacao String?
-
-  status              String
-  ativo               Boolean   @default(true)
-  data_de_criacao     DateTime  @default(now())
-  data_de_atualizacao DateTime  @updatedAt
-  data_de_delecao     DateTime?
-  metadata            Json?     @default("{}")
-
-  // Relacionamentos
-  produtos     ClienteProduto[]
-  cobrancas    Cobranca[]
-  recorrencias Recorrencia[]
-  historico_honorarios  HistoricoHonorario[]
-  contratos    Contrato[]
+  produtos                ClienteProduto[]
+  cobrancas               Cobranca[]
+  contratos               Contrato[]
+  historico_honorarios    HistoricoHonorario[]
+  recorrencias            Recorrencia[]
 
   @@map("clientes")
 }
 
 model Categoria {
-  id        String  @id @default(uuid())
-  nome      String
-  descricao String?
-
+  id                  String    @id @default(uuid())
+  nome                String
+  descricao           String?
   ativo               Boolean   @default(true)
   data_de_criacao     DateTime  @default(now())
   data_de_atualizacao DateTime  @updatedAt
   data_de_delecao     DateTime?
   metadata            Json?     @default("{}")
-
-  //Relacionamentos
-  produtos Produto[]
+  produtos            Produto[]
 
   @@map("categorias")
 }
 
 model Produto {
-  id        String  @id @default(uuid())
-  nome      String
-  descricao String?
-  valor     Int     // em centavos
-  tipo      String  // servico | produto
-  direcao   String  // entrada | saida
-
-  ativo               Boolean   @default(true)
-  data_de_criacao     DateTime  @default(now())
-  data_de_atualizacao DateTime  @updatedAt
+  id                  String           @id @default(uuid())
+  nome                String
+  descricao           String?
+  valor               Int
+  tipo                String
+  direcao             String
+  ativo               Boolean          @default(true)
+  data_de_criacao     DateTime         @default(now())
+  data_de_atualizacao DateTime         @updatedAt
   data_de_delecao     DateTime?
-  metadata            Json?     @default("{}")
-
-  //Relacionamentos
-  categoria_id String
-
-  categoria   Categoria        @relation(fields: [categoria_id], references: [id])
-  clientes    ClienteProduto[]
-  cobrancas   ItemCobranca[]
-  recorrencias Recorrencia[]
+  metadata            Json?            @default("{}")
+  categoria_id        String
+  clientes            ClienteProduto[]
+  cobrancas           ItemCobranca[]
+  categoria           Categoria        @relation(fields: [categoria_id], references: [id])
+  recorrencias        Recorrencia[]
 
   @@map("produtos")
 }
 
 model ClienteProduto {
-  id         String  @id @default(uuid())
-  quantidade Int
-  nome       String
-  descricao  String?
-  valor      Int     // em centavos
-
+  id                  String    @id @default(uuid())
+  quantidade          Int
+  nome                String
+  descricao           String?
+  valor               Int
   status              String
   ativo               Boolean   @default(true)
   data_de_criacao     DateTime  @default(now())
   data_de_atualizacao DateTime  @updatedAt
   data_de_delecao     DateTime?
   metadata            Json?     @default("{}")
-
-  cliente_id String
-  produto_id String
-
-  cliente Cliente @relation(fields: [cliente_id], references: [id])
-  produto Produto @relation(fields: [produto_id], references: [id])
+  cliente_id          String
+  produto_id          String
+  cliente             Cliente   @relation(fields: [cliente_id], references: [id])
+  produto             Produto   @relation(fields: [produto_id], references: [id])
 
   @@map("cliente_produtos")
+}
+
+model Balanco {
+  id                  String       @id @default(uuid())
+  tipo                BalancoTipo
+  valor               Int
+  descricao           String?
+  status              String
+  data_de_fato        DateTime
+  data_de_criacao     DateTime     @default(now())
+  data_de_atualizacao DateTime     @updatedAt
+  metadata            Json?        @default("{}")
+  cobranca_id         String?
+  recorrencia_id      String?
+  conta_pagar_id      String?
+  cobranca            Cobranca?    @relation(fields: [cobranca_id], references: [id])
+  conta_pagar         ContaPagar?  @relation(fields: [conta_pagar_id], references: [id])
+  recorrencia         Recorrencia? @relation(fields: [recorrencia_id], references: [id])
+
+  @@map("balancos")
+}
+
+model Recorrencia {
+  id                  String    @id @default(uuid())
+  tipo                String
+  descricao           String?
+  data_de_inicio      DateTime
+  data_de_fim         DateTime?
+  frequencia          String
+  franquencia_valor   Int
+  ultima_execucao     DateTime?
+  proxima_execucao    DateTime?
+  dia_de_vencimento   Int?
+  ativo               Boolean   @default(true)
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?     @default("{}")
+  cliente_id          String?
+  produto_id          String?
+  balancos            Balanco[]
+  cliente             Cliente?  @relation(fields: [cliente_id], references: [id])
+  produto             Produto?  @relation(fields: [produto_id], references: [id])
+
+  @@map("recorrencias")
+}
+
+model Cobranca {
+  id                     String           @id @default(uuid())
+  subtotal               Int
+  desconto               Int
+  total                  Int
+  status                 String
+  data_de_vencimento     String
+  data_de_pagamento      DateTime?
+  metodo_de_pagamento    String?
+  data_de_cancelamento   DateTime?
+  motivo_de_cancelamento String?
+  observacoes            String?
+  data_de_criacao        DateTime         @default(now())
+  data_de_atualizacao    DateTime         @updatedAt
+  metadata               Json?            @default("{}")
+  cliente_id             String?
+  cliente_eventual_id    String?
+  balancos               Balanco[]
+  itens                  ItemCobranca[]
+  cliente_eventual       ClienteEventual? @relation(fields: [cliente_eventual_id], references: [id])
+  cliente                Cliente?         @relation(fields: [cliente_id], references: [id])
+
+  @@map("cobrancas")
+}
+
+model ItemCobranca {
+  id                  String    @id @default(uuid())
+  quantidade          Int       @default(1)
+  subtotal            Int
+  desconto            Int
+  total               Int
+  descricao           String?
+  data_de_criacao     DateTime  @default(now())
+  data_de_atualizacao DateTime  @updatedAt
+  metadata            Json?     @default("{}")
+  cobranca_id         String?
+  produto_id          String
+  valor_unitario      Int
+  cobranca            Cobranca? @relation(fields: [cobranca_id], references: [id])
+  produto             Produto   @relation(fields: [produto_id], references: [id])
+
+  @@map("cobranca_itens")
+}
+
+model ClienteEventual {
+  id                  String     @id @default(cuid())
+  nome                String
+  documento           String
+  telefone            String
+  email               String
+  valor_servico       Int
+  parcelamento        String
+  observacoes         String?
+  ativo               Boolean    @default(true)
+  data_de_criacao     DateTime   @default(now())
+  data_de_atualizacao DateTime   @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?      @default("{}")
+  parcelas_config     Json?
+  quantidade_parcelas Int?
+  valor_entrada       Int?
+  valor_parcelas      Int?
+  cobrancas           Cobranca[]
+
+  @@map("clientes_eventuais")
+}
+
+model Contrato {
+  id                  String   @id @default(cuid())
+  cliente_id          String
+  pdf_url             String?
+  metadata            Json?    @default("{}")
+  data_de_criacao     DateTime @default(now())
+  data_de_atualizacao DateTime @updatedAt
+  data_geracao        DateTime @default(now())
+  cliente             Cliente  @relation(fields: [cliente_id], references: [id], onDelete: Cascade)
+
+  @@map("contratos")
+}
+
+model ContaPagar {
+  id                  String                @id @default(cuid())
+  descricao           String
+  valor               Int
+  categoria           String
+  data_vencimento     DateTime
+  status              StatusContaPagar      @default(PENDENTE)
+  recorrencia         RecorrenciaContaPagar @default(ESPORADICA)
+  data_pagamento      DateTime?
+  ativo               Boolean               @default(true)
+  data_de_criacao     DateTime              @default(now())
+  data_de_atualizacao DateTime              @updatedAt
+  data_de_delecao     DateTime?
+  metadata            Json?                 @default("{}")
+  balancos            Balanco[]
+
+  @@map("contas_a_pagar")
 }
 
 enum BalancoTipo {
@@ -170,154 +289,16 @@ enum BalancoTipo {
   SAIDA
 }
 
-model Balanco {
-  id        String      @id @default(uuid())
-  tipo      BalancoTipo
-  valor     Int         // em centavos
-  descricao String?
-
-  status              String
-  data_de_fato        DateTime
-  data_de_criacao     DateTime @default(now())
-  data_de_atualizacao DateTime @updatedAt
-  metadata            Json?    @default("{}")
-
-  cobranca_id    String?
-  recorrencia_id String?
-
-  cobranca    Cobranca?    @relation(fields: [cobranca_id], references: [id])
-  recorrencia Recorrencia? @relation(fields: [recorrencia_id], references: [id])
-
-  @@map("balancos")
+enum StatusContaPagar {
+  PENDENTE
+  PAGO
+  VENCIDO
 }
 
-model Recorrencia {
-  id   String @id @default(uuid())
-  tipo String // entrada | saida
-
-  descricao      String?
-  data_de_inicio DateTime
-  data_de_fim    DateTime?
-
-  frequencia        String // "mensal", "semanal", etc.
-  franquencia_valor Int // a cada X frenquencia: Ex. a cada 1 mes
-
-  ultima_execucao  DateTime?
-  proxima_execucao DateTime?
-
-  dia_de_vencimento Int?
-
-  ativo               Boolean   @default(true)
-  data_de_criacao     DateTime  @default(now())
-  data_de_atualizacao DateTime  @updatedAt
-  data_de_delecao     DateTime?
-  metadata            Json?     @default("{}")
-
-  //Relacionamentos
-  cliente_id String?
-  produto_id String?
-
-  balancos Balanco[]
-  cliente  Cliente?  @relation(fields: [cliente_id], references: [id])
-  produto  Produto?  @relation(fields: [produto_id], references: [id])
-
-  @@map("recorrencias")
-}
-
-model Cobranca {
-  id String @id @default(uuid())
-
-  subtotal Int     // em centavos
-  desconto Int     // em centavos
-  total    Int     // em centavos
-  status   String  // "pendente", "pago", "cancelado"
-
-  data_de_vencimento     String
-  data_de_pagamento      DateTime?
-  metodo_de_pagamento    String?
-  data_de_cancelamento   DateTime?
-  motivo_de_cancelamento String?
-
-  observacoes String?
-
-  data_de_criacao     DateTime @default(now())
-  data_de_atualizacao DateTime @updatedAt
-  metadata            Json?    @default("{}")
-
-  //Relacionamentos
-  cliente_id          String?
-  cliente_eventual_id String?
-
-  cliente          Cliente?          @relation(fields: [cliente_id], references: [id])
-  cliente_eventual ClienteEventual?  @relation(fields: [cliente_eventual_id], references: [id])
-  itens            ItemCobranca[]
-  balancos         Balanco[]
-
-  @@map("cobrancas")
-}
-
-model ItemCobranca {
-  id              String  @id @default(uuid())
-  quantidade      Int     @default(1)
-  valor_unitario  Int     // em centavos
-  subtotal        Int     // em centavos
-  desconto        Int     // em centavos
-  total           Int     // em centavos
-  descricao       String?
-
-  data_de_criacao     DateTime @default(now())
-  data_de_atualizacao DateTime @updatedAt
-  metadata            Json?    @default("{}")
-
-  //Relacionamentos
-  cobranca_id String?
-  produto_id  String
-
-  cobranca Cobranca? @relation(fields: [cobranca_id], references: [id])
-  produto  Produto   @relation(fields: [produto_id], references: [id])
-
-  @@map("cobranca_itens")
-}
-
-model ClienteEventual {
-  id             String @id @default(cuid())
-  nome           String
-  documento      String
-  telefone       String
-  email          String
-  valor_servico  Int    // em centavos
-  parcelamento   String // "AVISTA", "PARCELADO", "ENTRADA_PARCELAS"
-  observacoes    String?
-
-  valor_entrada       Int?  // em centavos
-  quantidade_parcelas Int?
-  valor_parcelas      Int?  // em centavos
-  parcelas_config     Json? // Armazenar configuração das parcelas
-
-  ativo               Boolean   @default(true)
-  data_de_criacao     DateTime  @default(now())
-  data_de_atualizacao DateTime  @updatedAt
-  data_de_delecao     DateTime?
-  metadata            Json?     @default("{}")
-
-  // Relacionamentos com contas a receber
-  cobrancas Cobranca[]
-
-  @@map("clientes_eventuais")
-}
-
-model Contrato {
-  id          String @id @default(cuid())
-  cliente_id  String
-  pdf_url     String?
-  metadata    Json?  @default("{}")
-  data_geracao        DateTime @default(now())
-  
-  data_de_criacao     DateTime @default(now())
-  data_de_atualizacao DateTime @updatedAt
-  
-  // Relacionamento
-  cliente Cliente @relation(fields: [cliente_id], references: [id], onDelete: Cascade)
-  
-  @@map("contratos")
+enum RecorrenciaContaPagar {
+  MENSAL
+  TRIMESTRAL
+  SEMESTRAL
+  ANUAL
+  ESPORADICA
 }

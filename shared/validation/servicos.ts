@@ -28,7 +28,7 @@ export const servicoBaseSchema = z.object({
     .number()
     .positive("Valor deve ser positivo")
     .multipleOf(0.01, "Valor deve ter no máximo 2 casas decimais")
-    .transform((value) => new Money({ value })),
+    .transform((value) => Money.fromReais(value)),
 
   tipo: TipoServicoEnum,
   direcao: DirecaoEnum,
@@ -76,7 +76,7 @@ export const clienteServicoSchema = z.object({
     .number()
     .positive("Valor deve ser positivo")
     .multipleOf(0.01)
-    .transform((value) => new Money({ value })),
+    .transform((value) => Money.fromReais(value)),
   status: z.string().default("ATIVO"),
   ativo: z.boolean().default(true),
 });

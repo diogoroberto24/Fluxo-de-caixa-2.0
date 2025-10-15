@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   /* Updated color palette for professional cash flow system */
   --background: oklch(1 0 0); /* #ffffff */

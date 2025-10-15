@@ -2,25 +2,105 @@ import { prisma } from "@/lib/db";
 import {
   Cliente,
   IClienteRepository,
-  ListClientesInput,
+  ClienteFilters,
   CreateClienteInput,
   UpdateClienteInput,
 } from "../interfaces/cliente-repo";
 
 export class ClienteRepository implements IClienteRepository {
   async create(data: CreateClienteInput): Promise<Cliente> {
+    // Extrair produtos do data para tratar separadamente
+    const { produtos, ...clienteData } = data;
+    
     const cliente = await prisma.cliente.create({
-      data,
+      data: {
+        ...clienteData,
+        // Garantir que campos obrigatórios tenham valores padrão
+        representante_nome: clienteData.representante_nome || "",
+        representante_rg: clienteData.representante_rg || "",
+        representante_cpf: clienteData.representante_cpf || "",
+        representante_rua: clienteData.representante_rua || "",
+        representante_bairro: clienteData.representante_bairro || "",
+        representante_municipio: clienteData.representante_municipio || "",
+        representante_cep: clienteData.representante_cep || "",
+        cliente_pais: clienteData.cliente_pais || "Brasil",
+        honorarios: clienteData.honorarios || 0,
+        status: clienteData.status || "ativo",
+        ativo: clienteData.ativo ?? true,
+        metadata: clienteData.metadata || {},
+      },
     });
+
+    // Se há produtos, criar as relações ClienteProduto
+    if (produtos && produtos.length > 0) {
+      await Promise.all(
+        produtos.map(produto =>
+          prisma.clienteProduto.create({
+            data: {
+              cliente_id: cliente.id,
+              produto_id: produto.produto_id,
+              quantidade: produto.quantidade,
+              nome: produto.nome,
+              descricao: produto.descricao,
+              valor: produto.valor,
+              status: produto.status,
+              ativo: produto.ativo,
+            },
+          })
+        )
+      );
+    }
 
     return cliente;
   }
 
   async update(id: string, data: UpdateClienteInput): Promise<Cliente> {
+    // Extrair produtos do data para tratar separadamente
+    const { produtos, ...clienteData } = data;
+    
     const cliente = await prisma.cliente.update({
       where: { id },
-      data: data,
+      data: {
+        ...clienteData,
+        // Garantir que campos obrigatórios tenham valores padrão se fornecidos
+        ...(clienteData.representante_nome !== undefined && { representante_nome: clienteData.representante_nome || "" }),
+        ...(clienteData.representante_rg !== undefined && { representante_rg: clienteData.representante_rg || "" }),
+        ...(clienteData.representante_cpf !== undefined && { representante_cpf: clienteData.representante_cpf || "" }),
+        ...(clienteData.representante_rua !== undefined && { representante_rua: clienteData.representante_rua || "" }),
+        ...(clienteData.representante_bairro !== undefined && { representante_bairro: clienteData.representante_bairro || "" }),
+        ...(clienteData.representante_municipio !== undefined && { representante_municipio: clienteData.representante_municipio || "" }),
+        ...(clienteData.representante_cep !== undefined && { representante_cep: clienteData.representante_cep || "" }),
+        ...(clienteData.cliente_pais !== undefined && { cliente_pais: clienteData.cliente_pais || "Brasil" }),
+      },
     });
+
+    // Se há produtos para atualizar, primeiro remover os existentes e criar os novos
+    if (produtos !== undefined) {
+      // Remover produtos existentes
+      await prisma.clienteProduto.deleteMany({
+        where: { cliente_id: id },
+      });
+
+      // Criar novos produtos se fornecidos
+      if (produtos.length > 0) {
+        await Promise.all(
+          produtos.map(produto =>
+            prisma.clienteProduto.create({
+              data: {
+                cliente_id: id,
+                produto_id: produto.produto_id,
+                quantidade: produto.quantidade,
+                nome: produto.nome,
+                descricao: produto.descricao,
+                valor: produto.valor,
+                status: produto.status,
+                ativo: produto.ativo,
+              },
+            })
+          )
+        );
+      }
+    }
 
     return cliente;
   }
@@ -49,7 +129,7 @@ export class ClienteRepository implements IClienteRepository {
     return cliente;
   }
 
-  async findMany(filters: ListClientesInput): Promise<{
+  async findMany(filters: ClienteFilters): Promise<{
     items: Cliente[];
     total: number;
   }> {

@@ -72,20 +72,40 @@ export function ReceivablesManagement() {
   const [year, setYear] = useState<string>(() => new Date().getFullYear().toString())
   const [tipoCliente, setTipoCliente] = useState<string>("") // "" | "fixo" | "eventual"
   const [status, setStatus] = useState<string>("") // "" | "confirmado" | "previsto"
+  const [isLoading, setIsLoading] = useState(false)
 
   // Buscar dados reais do balanço (recebimentos)
   const fetchReceivables = async () => {
-    const params = new URLSearchParams()
-    params.set('mes', month)
-    params.set('ano', year)
-    if (tipoCliente) params.set('tipo_cliente', tipoCliente)
-    if (status) params.set('status', status)
-
-    const res = await fetch(`/api/balancos?${params.toString()}`)
-    if (!res.ok) {
-      console.error('Falha ao carregar recebimentos')
+    if (isLoading) {
+      console.warn('Requisição de recebimentos já em andamento, ignorando nova requisição')
       return
     }
+
+    // Validar se a data não é muito futura
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear()
+    const currentMonth = currentDate.getMonth() + 1
+    const requestYear = parseInt(year)
+    const requestMonth = parseInt(month)
+    
+    if (requestYear > currentYear + 1 || (requestYear === currentYear + 1 && requestMonth > currentMonth)) {
+      console.warn('Data muito futura, ignorando requisição de recebimentos')
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      const params = new URLSearchParams()
+      params.set('mes', month)
+      params.set('ano', year)
+      if (tipoCliente) params.set('tipo_cliente', tipoCliente)
+      if (status) params.set('status', status)
+
+      const res = await fetch(`/api/balancos?${params.toString()}`)
+      if (!res.ok) {
+        console.error('Falha ao carregar recebimentos')
+        return
+      }
     const data = await res.json()
 
     const mapped = data.map((b: any) => {
@@ -108,7 +128,13 @@ export function ReceivablesManagement() {
         tipo,
       }
     })
+
     setReceivables(mapped)
+    } catch (error) {
+      console.error('Erro ao carregar recebimentos:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   useEffect(() => {

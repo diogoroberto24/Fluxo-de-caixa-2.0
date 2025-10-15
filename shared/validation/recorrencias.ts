@@ -45,19 +45,21 @@ export const recorrenciaBaseSchema = z.object({
   ativo: z.boolean().default(true),
 });
 
+// Schema base estendido (sem refine)
+const createRecorrenciaBaseSchema = recorrenciaBaseSchema.extend({
+  cliente_id: z.string().uuid("ID do cliente inválido").optional().nullable(),
+  produto_id: z.string().uuid("ID do produto inválido").optional().nullable(),
+  metadata: z.record(z.any()).optional().default({}),
+});
+
 // Schema para criar recorrência
-export const createRecorrenciaSchema = recorrenciaBaseSchema
-  .extend({
-    cliente_id: z.string().uuid("ID do cliente inválido").optional().nullable(),
-    produto_id: z.string().uuid("ID do produto inválido").optional().nullable(),
-    metadata: z.record(z.any()).optional().default({}),
-  })
+export const createRecorrenciaSchema = createRecorrenciaBaseSchema
   .refine((data) => data.cliente_id || data.produto_id, {
     message: "Deve ser informado um cliente ou produto",
   });
 
 // Schema para atualizar recorrência
-export const updateRecorrenciaSchema = createRecorrenciaSchema.partial();
+export const updateRecorrenciaSchema = createRecorrenciaBaseSchema.partial();
 
 // Schema para listagem
 export const listRecorrenciasSchema = z.object({

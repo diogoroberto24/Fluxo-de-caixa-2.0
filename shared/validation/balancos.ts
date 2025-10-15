@@ -32,8 +32,9 @@ export const balancoBaseSchema = z.object({
 
   data_de_fato: z.date().or(z.string().pipe(z.coerce.date())),
 
-  cobranca_id: z.string().uuid().optional().nullable(),
-  recorrencia_id: z.string().uuid().optional().nullable(),
+  cobranca_id: z.string().cuid().optional().nullable(),
+  recorrencia_id: z.string().cuid().optional().nullable(),
+  conta_pagar_id: z.string().cuid().optional().nullable(),
 });
 
 // Schema para criar lançamento
@@ -106,9 +107,12 @@ export const criarBalancoSchema = z.object({
   tipo: z.enum(["ENTRADA", "SAIDA"]),
   valor: z.number().int().min(0),
   descricao: z.string().optional(),
+  status: z.enum(["pendente", "confirmado", "cancelado", "reconciliado"]).default("pendente"),
   data_de_fato: z.string().datetime(),
   cobranca_id: z.string().uuid().optional(),
   recorrencia_id: z.string().uuid().optional(),
+  conta_pagar_id: z.string().uuid().optional(),
+  metadata: z.record(z.any()).optional(),
 });
 
 export const atualizarBalancoSchema = criarBalancoSchema.partial().extend({

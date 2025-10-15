@@ -4,6 +4,7 @@ import { cobrancaRepository, balancoRepository } from "@/server/infra/repos";
 import { NotFoundError, ValidationError } from "@/shared/errors";
 import type { Cobranca } from "@/shared/types";
 import { z } from "zod";
+import { Money } from "@/shared/utils/money";
 
 interface PagarCobrancaInput extends MarcarComoPagoInput {
   id: string;
@@ -49,10 +50,14 @@ export class PagarCobrancaUseCase extends UseCase<
     // Criar entrada no balanço
     await balancoRepository.criar({
       tipo: "ENTRADA",
-      valor: cobranca.total,
+      valor: Money.fromCentavos(cobranca.total), // Converter de centavos para Money
       descricao: `Pagamento da cobrança ${cobranca.id}`,
-      data_de_fato: (data_de_pagamento || new Date()).toISOString(),
+      status: "confirmado", // Campo obrigatório
+      data_de_fato: new Date(data_de_pagamento || new Date()), // Converter string para Date
       cobranca_id: cobranca.id,
+      recorrencia_id: null, // Campo obrigatório (pode ser null)
+      conta_pagar_id: null, // Campo obrigatório (pode ser null)
+      metadata: {}, // Campo obrigatório
     });
 
     return cobrancaPaga;

@@ -1,15 +1,21 @@
 import { prisma } from "@/lib/db";
 import type { BalancoRepository } from "../interfaces/balanco-repository";
-import type { Balanco } from "@/shared/types";
-import type { CriarBalancoRequest, AtualizarBalancoRequest, BalancoFilters } from "@/shared/validation/balancos";
+import type { Balanco, BalancoTipo } from "@/shared/types";
+import type { CreateBalancoInput, AtualizarBalancoRequest, BalancoFilters } from "@/shared/validation/balancos";
 
 export class PrismaBalancoRepository implements BalancoRepository {
-  async criar(data: CriarBalancoRequest): Promise<Balanco> {
+  async criar(data: CreateBalancoInput): Promise<Balanco> {
     return await prisma.balanco.create({
       data: {
-        ...data,
-        status: "confirmado",
+        tipo: data.tipo,
+        valor: data.valor.centavos,
+        descricao: data.descricao,
+        status: data.status,
         data_de_fato: new Date(data.data_de_fato),
+        cobranca_id: data.cobranca_id,
+        recorrencia_id: data.recorrencia_id,
+        conta_pagar_id: data.conta_pagar_id,
+        metadata: data.metadata || {},
       },
     });
   }
@@ -94,6 +100,19 @@ export class PrismaBalancoRepository implements BalancoRepository {
           gte: dataInicio,
           lte: dataFim,
         },
+      },
+      orderBy: { data_de_fato: "asc" },
+    });
+  }
+
+  async buscarPorPeriodoETipo(dataInicio: Date, dataFim: Date, tipo: BalancoTipo): Promise<Balanco[]> {
+    return await prisma.balanco.findMany({
+      where: {
+        data_de_fato: {
+          gte: dataInicio,
+          lte: dataFim,
+        },
+        tipo: tipo,
       },
       orderBy: { data_de_fato: "asc" },
     });

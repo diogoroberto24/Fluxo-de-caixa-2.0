@@ -1,5 +1,5 @@
 import type {
-  ListClientesInput,
+  ClienteFilters,
   CreateClienteInput,
   UpdateClienteInput,
 } from "@/shared/validation/clientes";
@@ -11,7 +11,7 @@ export interface IClienteRepository {
   update(id: string, data: UpdateClienteInput): Promise<Cliente>;
   findById(id: string): Promise<Cliente | null>;
   findByDocumento(documento: string): Promise<Cliente | null>;
-  findMany(filters: ListClientesInput): Promise<{
+  findMany(filters: ClienteFilters): Promise<{
     items: Cliente[];
     total: number;
   }>;
@@ -21,7 +21,7 @@ export interface IClienteRepository {
 }
 
 export type {
-  ListClientesInput,
+  ClienteFilters,
   CreateClienteInput,
   UpdateClienteInput,
   Cliente,
