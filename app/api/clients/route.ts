@@ -230,22 +230,36 @@ export async function PUT(request: Request) {
 }
 
 // Obter todos os clientes
-export async function GET() {
+// Método: export async function GET
+// Ajuste: Assinatura do método para Request (evita dependência de NextRequest não importada)
+
+export async function GET(request: Request) {
   try {
+    // Verificar conexão com o banco de dados e tentar reconectar
+    const { reconnectDatabase } = await import('@/lib/db')
+    try {
+      const reconnected = await reconnectDatabase(3, 1000)
+      if (!reconnected) {
+        console.error('Falha ao reconectar com o banco de dados após várias tentativas')
+        return NextResponse.json(
+          { message: 'Erro ao buscar clientes: Erro de conexão com o banco de dados' },
+          { status: 503 }
+        )
+      }
+    } catch (dbError) {
+      console.error('Erro de conexão com o banco de dados:', dbError);
+      return NextResponse.json(
+        { message: 'Erro ao buscar clientes: Erro de conexão com o banco de dados' },
+        { status: 503 }
+      );
+    }
+    
     const clients = await prisma.cliente.findMany({
       include: {
-        produtos: {
-          include: {
-            produto: true,
-          },
-        },
+        produtos: { include: { produto: true } },
         cobrancas: {
-          where: {
-            status: 'pago'
-          },
-          orderBy: {
-            data_de_pagamento: 'desc'
-          },
+          where: { status: 'pago' },
+          orderBy: { data_de_pagamento: 'desc' },
           take: 1
         },
       },
@@ -254,10 +268,8 @@ export async function GET() {
     return NextResponse.json(clients);
   } catch (error) {
     console.error("Erro ao buscar clientes:", error);
-    return NextResponse.json(
-      { message: "Erro ao buscar clientes" },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Erro ao buscar clientes";
+    return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }
 

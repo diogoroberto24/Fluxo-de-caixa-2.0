@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   // Database
-  DATABASE_URL: z.string().url('DATABASE_URL deve ser uma URL válida'),
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL é obrigatória'),
   
   // Next.js
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -44,5 +44,4 @@ function validateEnv() {
 }
 
 export const env = validateEnv()
-
 export type Env = z.infer<typeof envSchema>

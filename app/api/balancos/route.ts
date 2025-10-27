@@ -2,8 +2,31 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/db';
 
 // Obter todos os lançamentos do balanço
+// Método: export async function GET
+// Ajuste: Para data futura, retornar [] com 200, evitando erro no front (receivables-management).
+
 export async function GET(request: Request) {
   try {
+    // Verificar conexão com o banco de dados e tentar reconectar
+    const { reconnectDatabase } = await import('@/lib/db');
+    
+    try {
+      const reconnected = await reconnectDatabase(3, 1000);
+      if (!reconnected) {
+        console.error('Falha ao reconectar com o banco de dados após várias tentativas');
+        return NextResponse.json(
+          { message: 'Falha ao carregar recebimentos: Erro de conexão com o banco de dados' },
+          { status: 503 }
+        );
+      }
+    } catch (dbError) {
+      console.error("Erro de conexão com o banco de dados:", dbError);
+      return NextResponse.json(
+        { message: "Falha ao carregar recebimentos: Erro de conexão com o banco de dados" },
+        { status: 503 }
+      );
+    }
+    
     const { searchParams } = new URL(request.url);
     const cobrancaId = searchParams.get('cobranca_id');
     const mes = searchParams.get('mes'); // 1-12
@@ -27,14 +50,13 @@ export async function GET(request: Request) {
     if (mes && ano) {
       const m = Number(mes);
       const y = Number(ano);
-      
-      // Validar se a data não é muito futura
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
       const currentMonth = currentDate.getMonth() + 1;
-      
+
       if (y > currentYear + 1 || (y === currentYear + 1 && m > currentMonth)) {
-        return NextResponse.json({ message: 'Data muito futura' }, { status: 400 });
+        // Em datas muito futuras, retorna lista vazia em vez de 400
+        return NextResponse.json([], { status: 200 });
       }
       
       const start = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0));
@@ -45,36 +67,39 @@ export async function GET(request: Request) {
       };
     }
 
+    // Verificar se o banco de dados está acessível
     const balancos = await prisma.balanco.findMany({
       where,
       include: {
-        cobranca: {
-          include: {
-            cliente: true,
-            cliente_eventual: true,
-          },
+      cobranca: {
+        include: {
+          cliente: true,
+          cliente_eventual: true,
         },
-        recorrencia: true,
       },
-      orderBy: {
-        data_de_fato: 'desc',
-      },
-    });
+      recorrencia: true,
+    },
+    orderBy: {
+      data_de_fato: 'desc',
+    },
+  });
 
-    // Filtra tipo de cliente no pós-processamento para simplicidade
-    const filtered = tipoCliente
-      ? balancos.filter((b) => {
-          const isFixo = !!b.cobranca?.cliente_id;
-          return tipoCliente === 'fixo' ? isFixo : !isFixo;
-        })
-      : balancos;
+  // Filtra tipo de cliente no pós-processamento para simplicidade
+  const filtered = tipoCliente
+    ? balancos.filter((b) => {
+        const isFixo = !!b.cobranca?.cliente_id;
+        return tipoCliente === 'fixo' ? isFixo : !isFixo;
+      })
+    : balancos;
 
-    return NextResponse.json(filtered);
-  } catch (error) {
-    console.error('Erro ao buscar lançamentos do balanço:', error);
-    return NextResponse.json({ message: 'Erro ao buscar lançamentos do balanço' }, { status: 500 });
-  }
+  return NextResponse.json(filtered);
+} catch (error) {
+  console.error('Erro ao buscar lançamentos do balanço:', error);
+  return NextResponse.json({ message: 'Erro ao buscar lançamentos do balanço' }, { status: 500 });
 }
+}
+
+
 
 // Criar um novo lançamento no balanço
 export async function POST(request: Request) {
