@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package.json package-lock.json* pnpm-lock.yaml* ./
 COPY prisma ./prisma
 RUN npm install --no-audit --no-fund
+RUN npm rebuild @tailwindcss/oxide || true
+RUN LCSS_VER=$(node -p "require('./node_modules/lightningcss/package.json').version") && npm install "lightningcss-linux-x64-gnu@${LCSS_VER}" --no-save || true
 RUN npx prisma generate
 COPY . .
 RUN npm run build
