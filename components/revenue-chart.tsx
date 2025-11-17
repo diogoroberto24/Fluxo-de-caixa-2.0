@@ -9,34 +9,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, TrendingDown, BarChart3, LineChartIcon } from "lucide-react"
 
-const fullChartData = [
-  // 2023
-  { month: "Jan", year: 2023, previsto: 85000, realizado: 78000, period: "Jan/2023" },
-  { month: "Fev", year: 2023, previsto: 90000, realizado: 85000, period: "Fev/2023" },
-  { month: "Mar", year: 2023, previsto: 95000, realizado: 88000, period: "Mar/2023" },
-  { month: "Abr", year: 2023, previsto: 100000, realizado: 95000, period: "Abr/2023" },
-  { month: "Mai", year: 2023, previsto: 105000, realizado: 98000, period: "Mai/2023" },
-  { month: "Jun", year: 2023, previsto: 110000, realizado: 105000, period: "Jun/2023" },
-  { month: "Jul", year: 2023, previsto: 115000, realizado: 108000, period: "Jul/2023" },
-  { month: "Ago", year: 2023, previsto: 120000, realizado: 115000, period: "Ago/2023" },
-  { month: "Set", year: 2023, previsto: 125000, realizado: 118000, period: "Set/2023" },
-  { month: "Out", year: 2023, previsto: 130000, realizado: 125000, period: "Out/2023" },
-  { month: "Nov", year: 2023, previsto: 135000, realizado: 128000, period: "Nov/2023" },
-  { month: "Dez", year: 2023, previsto: 140000, realizado: 135000, period: "Dez/2023" },
-  // 2024
-  { month: "Jan", year: 2024, previsto: 95000, realizado: 87000, period: "Jan/2024" },
-  { month: "Fev", year: 2024, previsto: 105000, realizado: 98000, period: "Fev/2024" },
-  { month: "Mar", year: 2024, previsto: 115000, realizado: 108000, period: "Mar/2024" },
-  { month: "Abr", year: 2024, previsto: 120000, realizado: 115000, period: "Abr/2024" },
-  { month: "Mai", year: 2024, previsto: 125000, realizado: 118000, period: "Mai/2024" },
-  { month: "Jun", year: 2024, previsto: 130000, realizado: 125000, period: "Jun/2024" },
-  { month: "Jul", year: 2024, previsto: 135000, realizado: 128000, period: "Jul/2024" },
-  { month: "Ago", year: 2024, previsto: 140000, realizado: 132000, period: "Ago/2024" },
-  { month: "Set", year: 2024, previsto: 145000, realizado: 138000, period: "Set/2024" },
-  { month: "Out", year: 2024, previsto: 150000, realizado: 142000, period: "Out/2024" },
-  { month: "Nov", year: 2024, previsto: 155000, realizado: 148000, period: "Nov/2024" },
-  { month: "Dez", year: 2024, previsto: 160000, realizado: 152000, period: "Dez/2024" },
-]
+interface RevenueChartProps {
+  data?: Array<{
+    month: string
+    year: number
+    previsto: number
+    realizado: number
+    period: string
+  }>
+}
+
+// TODO: Implementar busca de dados de receita da API
+const defaultChartData: Array<{
+  month: string
+  year: number
+  previsto: number
+  realizado: number
+  period: string
+}> = []
 
 const chartConfig = {
   previsto: {
@@ -53,12 +43,15 @@ const chartConfig = {
   },
 }
 
-export function RevenueChart() {
+export function RevenueChart({ data }: RevenueChartProps) {
   const [viewType, setViewType] = useState<"line" | "bar">("line")
-  const [selectedYear, setSelectedYear] = useState("2024")
+  const [selectedYear, setSelectedYear] = useState("2025")
   const [comparisonMode, setComparisonMode] = useState(false)
   const [comparisonPeriod, setComparisonPeriod] = useState("")
   const [isVisible, setIsVisible] = useState(false)
+
+  // Usar dados fornecidos ou dados padrão
+  const fullChartData = data && data.length > 0 ? data : defaultChartData
 
   useEffect(() => {
     setIsVisible(false)
@@ -87,8 +80,11 @@ export function RevenueChart() {
   const currentData = getComparisonData()
   const totalRealizado = currentData.reduce((sum, item) => sum + item.realizado, 0)
   const totalPrevisto = currentData.reduce((sum, item) => sum + item.previsto, 0)
-  const performance = ((totalRealizado / totalPrevisto) * 100).toFixed(1)
+  const performance = totalPrevisto > 0 ? ((totalRealizado / totalPrevisto) * 100).toFixed(1) : '0'
   const isPositive = totalRealizado >= totalPrevisto
+
+  // Obter anos disponíveis dos dados
+  const availableYears = [...new Set(fullChartData.map(item => item.year.toString()))].sort()
 
   return (
     <Card className="bg-card border-border">
@@ -102,7 +98,7 @@ export function RevenueChart() {
                 {performance}% do previsto
               </Badge>
               <span className="text-sm text-muted-foreground">
-                R$ {totalRealizado.toLocaleString("pt-BR")} / R$ {totalPrevisto.toLocaleString("pt-BR")}
+                R$ {(totalRealizado / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} / R$ {(totalPrevisto / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>
@@ -113,8 +109,9 @@ export function RevenueChart() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2023">2023</SelectItem>
-                <SelectItem value="2024">2024</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -145,6 +142,7 @@ export function RevenueChart() {
               <SelectContent>
                 <SelectItem value="2023">2023</SelectItem>
                 <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
               </SelectContent>
             </Select>
           )}

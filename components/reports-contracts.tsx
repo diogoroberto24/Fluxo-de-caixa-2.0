@@ -9,32 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Download, FileText, Plus } from "lucide-react"
 import { ReportsChart } from "@/components/reports-chart"
 
-const mockContracts = [
-  {
-    id: 1,
-    client: "Empresa ABC Ltda",
-    type: "Contábil + Fiscal",
-    value: "R$ 2.500,00",
-    startDate: "01/01/2024",
-    status: "Ativo",
-  },
-  {
-    id: 2,
-    client: "João Silva ME",
-    type: "Contábil",
-    value: "R$ 1.200,00",
-    startDate: "15/03/2024",
-    status: "Ativo",
-  },
-  {
-    id: 3,
-    client: "Comércio XYZ",
-    type: "Completo",
-    value: "R$ 3.800,00",
-    startDate: "01/06/2024",
-    status: "Pendente",
-  },
-]
+
 
 export function ReportsContracts() {
   const [reportType, setReportType] = useState("")
@@ -100,7 +75,8 @@ export function ReportsContracts() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockContracts.map((contract) => (
+              {/* TODO: Implementar busca de contratos reais da API */}
+              {[].map((contract: any) => (
                 <TableRow key={contract.id}>
                   <TableCell className="font-medium">{contract.id}</TableCell>
                   <TableCell>{contract.client}</TableCell>
@@ -117,6 +93,13 @@ export function ReportsContracts() {
                   </TableCell>
                 </TableRow>
               ))}
+              {[].length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    Nenhum contrato encontrado
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

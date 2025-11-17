@@ -21,19 +21,8 @@ interface ClientAutocompleteProps {
   className?: string
 }
 
-// Mock data dos clientes - em produção viria de uma API
-const mockClients: Client[] = [
-  { id: "1", name: "Tech Solutions Ltda", email: "contato@techsolutions.com", status: "active" },
-  { id: "2", name: "Inovação Digital ME", email: "admin@inovacaodigital.com", status: "active" },
-  { id: "3", name: "Consultoria Empresarial S/A", email: "info@consultoriaempresarial.com", status: "active" },
-  { id: "4", name: "StartUp Criativa", email: "hello@startupcriativa.com", status: "overdue" },
-  { id: "5", name: "Comércio Online Ltda", email: "vendas@comercioonline.com", status: "active" },
-  { id: "6", name: "Serviços Profissionais ME", email: "contato@servicosprofissionais.com", status: "active" },
-  { id: "7", name: "Indústria Moderna S/A", email: "admin@industriamoderna.com", status: "active" },
-  { id: "8", name: "Logística Express", email: "operacoes@logisticaexpress.com", status: "overdue" },
-  { id: "9", name: "Marketing Digital Pro", email: "contato@marketingdigitalpro.com", status: "active" },
-  { id: "10", name: "Construção Civil Ltda", email: "obras@construcaocivil.com", status: "active" },
-]
+// TODO: Implementar busca de clientes reais da API
+const mockClients: Client[] = []
 
 export function ClientAutocomplete({
   value,
@@ -44,10 +33,10 @@ export function ClientAutocomplete({
   const [open, setOpen] = React.useState(false)
   const [searchValue, setSearchValue] = React.useState("")
 
-  const selectedClient = mockClients.find((client) => client.name === value)
+  const selectedClient = mockClients.find((client: any) => client.name === value)
 
   const filteredClients = mockClients.filter(
-    (client) => client.status !== "inactive" && client.name.toLowerCase().includes(searchValue.toLowerCase()),
+    (client: any) => client.status !== "inactive" && client.name.toLowerCase().includes(searchValue.toLowerCase()),
   )
 
   return (

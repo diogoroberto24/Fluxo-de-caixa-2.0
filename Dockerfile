@@ -1,21 +1,27 @@
-FROM node:22.14.0
-
-ENV NODE_ENV=production \
-    YARN_ENABLE_IMMUTABLE_INSTALLS=true
-
+FROM node:20-alpine AS builder
+ENV NODE_ENV=production
 WORKDIR /app
-
-COPY .yarn/ .yarn/
-COPY .yarnrc.yml package.json yarn.lock .
-
-RUN corepack enable && \
-    corepack prepare yarn@3.8.3 --activate && \
-    yarn install --immutable
-
+RUN apk add --no-cache libc6-compat
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
+COPY prisma ./prisma
+RUN npm ci
+RUN npx prisma generate
 COPY . .
+RUN npm run build
+ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN yarn prisma generate && yarn build
-
-EXPOSE 3333
-
-CMD ["yarn", "start:prod"]
+FROM node:20-alpine AS production
+ENV NODE_ENV=production
+WORKDIR /app
+RUN apk add --no-cache libc6-compat curl
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/next.config.mjs ./next.config.mjs
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:${PORT:-3000}/api/health || exit 1
+CMD ["/usr/local/bin/docker-entrypoint.sh"]

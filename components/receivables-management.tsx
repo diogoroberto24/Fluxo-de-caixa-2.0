@@ -19,44 +19,7 @@ import { PaymentModal } from "@/components/payment-modal"
 import { formatMoney } from "@/shared/utils/money"
 import { useToast } from "@/hooks/use-toast"
 
-const mockReceivables = [
-  {
-    id: 1,
-    client: "Empresa ABC Ltda",
-    value: "R$ 2.500,00",
-    date: "15/12/2024",
-    method: "PIX",
-    status: "Pago",
-    observations: "Pagamento em dia",
-  },
-  {
-    id: 2,
-    client: "João Silva ME",
-    value: "R$ 1.200,00",
-    date: "20/12/2024",
-    method: "Boleto",
-    status: "Pendente",
-    observations: "Aguardando vencimento",
-  },
-  {
-    id: 3,
-    client: "Comércio XYZ",
-    value: "R$ 3.800,00",
-    date: "10/12/2024",
-    method: "Transferência",
-    status: "Atrasado",
-    observations: "Cliente contatado",
-  },
-  {
-    id: 4,
-    client: "Maria Santos",
-    value: "R$ 950,00",
-    date: "18/12/2024",
-    method: "Cartão",
-    status: "Pago",
-    observations: "Pagamento antecipado",
-  },
-]
+
 
 export function ReceivablesManagement() {
   const { toast } = useToast()

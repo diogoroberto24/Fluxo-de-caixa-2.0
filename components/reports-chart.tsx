@@ -4,12 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 
-const chartData = [
-  { category: "Contábil", value: 45000 },
-  { category: "Fiscal", value: 32000 },
-  { category: "Trabalhista", value: 18000 },
-  { category: "Societário", value: 12000 },
-]
+// TODO: Implementar busca de dados de faturamento por categoria da API
+const chartData: Array<{ category: string; value: number }> = []
 
 const chartConfig = {
   value: {
