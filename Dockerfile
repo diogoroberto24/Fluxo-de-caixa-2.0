@@ -3,7 +3,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY package.json package-lock.json* pnpm-lock.yaml* ./
 COPY prisma ./prisma
-RUN npm ci
+RUN npm install --no-audit --no-fund
 RUN npx prisma generate
 COPY . .
 RUN npm run build
