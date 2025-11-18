@@ -1,6 +1,8 @@
 FROM node:20-bookworm AS builder
 ENV NODE_ENV=development
 ENV DATABASE_URL=postgres://user:pass@localhost:5432/db
+ENV TAILWIND_DISABLE_NATIVE=1
+ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 COPY package.json package-lock.json* pnpm-lock.yaml* ./
 COPY prisma ./prisma
@@ -10,7 +12,6 @@ RUN LCSS_VER=$(node -p "require('./node_modules/lightningcss/package.json').vers
 RUN npx prisma generate
 COPY . .
 RUN npm run build
-ENV NEXT_TELEMETRY_DISABLED=1
 
 FROM node:20-bookworm AS production
 ENV NODE_ENV=production
