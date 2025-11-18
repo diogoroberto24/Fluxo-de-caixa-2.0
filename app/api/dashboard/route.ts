@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/db'
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns'
 
 export async function GET() {
   try {
+    if (process.env.NEXT_PHASE === 'phase-production-build' || !process.env.DATABASE_URL || (process.env.DATABASE_URL || '').includes('localhost')) {
+      return NextResponse.json({
+        clientesAtivos: [],
+        faturamentoPrevisto: 0,
+        comparativoMesAnterior: 0,
+      })
+    }
     const now = new Date()
     const currentMonthStart = startOfMonth(now)
     const currentMonthEnd = endOfMonth(now)
