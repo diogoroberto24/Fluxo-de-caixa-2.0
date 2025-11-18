@@ -10,6 +10,8 @@ until npx prisma migrate status >/dev/null 2>&1 || [ $COUNT -ge 30 ]; do
   COUNT=$((COUNT+1))
   sleep 2
 done
+echo "Gerando Prisma Client..."
+npx prisma generate || true
 echo "Aplicando migrações do Prisma..."
 npx prisma migrate deploy
 echo "Iniciando Next.js na porta ${PORT:-3000}..."
