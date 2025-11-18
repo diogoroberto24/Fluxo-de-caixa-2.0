@@ -6,12 +6,13 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 // Configuração do cliente Prisma com retry
+const dbUrl = process.env.DATABASE_URL ?? 'postgres://placeholder:placeholder@localhost:5432/placeholder'
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   log: ['query', 'info', 'warn', 'error'],
   errorFormat: 'pretty',
   datasources: {
     db: {
-      url: process.env.DATABASE_URL,
+      url: dbUrl,
     },
   },
 })

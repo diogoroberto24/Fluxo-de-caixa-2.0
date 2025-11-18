@@ -104,3 +104,4 @@ export async function GET(
     return NextResponse.json({ message: 'Erro ao buscar cobrança', error: String(error) }, { status: 500 });
   }
 }
+export const dynamic = 'force-dynamic'
