@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   generator: "v0.app",
 }
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default function RootLayout({
   children,
 }: Readonly<{

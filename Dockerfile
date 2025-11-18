@@ -1,5 +1,6 @@
 FROM node:20-bookworm AS builder
 ENV NODE_ENV=development
+ENV DATABASE_URL=postgres://user:pass@localhost:5432/db
 WORKDIR /app
 COPY package.json package-lock.json* pnpm-lock.yaml* ./
 COPY prisma ./prisma

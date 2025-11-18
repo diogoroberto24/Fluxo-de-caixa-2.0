@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+export const dynamic = 'force-dynamic'
 import { RelatorioComparativoUseCase } from "@/server/use-cases/contas-a-pagar/relatorio-comparativo"
 
 export async function GET(request: NextRequest) {
